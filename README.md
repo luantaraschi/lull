@@ -3,6 +3,9 @@
 [![ci](https://github.com/luantaraschi/lull/actions/workflows/ci.yml/badge.svg)](https://github.com/luantaraschi/lull/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**[Run it in your browser](https://luantaraschi.github.io/lull/)**, where the
+page drives this library's own reducer, compiled from `src/core`.
+
 Conversation runtime for chat agents. It handles the four channel problems every
 WhatsApp or support bot ends up rewriting badly: fragmented messages,
 redelivered webhooks, human takeover, and session expiry.
@@ -197,6 +200,12 @@ of firing on time. A store with a due index (`listDue(now)`) driving the ticks
 would close that gap. It is not shipped.
 
 ## Try it
+
+The [demo page](https://luantaraschi.github.io/lull/) runs the reducer in the
+browser: send a burst of messages and watch the deadline slide, then hand the
+conversation to a human and watch the bot go quiet.
+
+Locally, the same behaviour against a real webhook:
 
 ```bash
 git clone https://github.com/luantaraschi/lull && cd lull

@@ -1,0 +1,555 @@
+/*
+  Tokens for the lull site.
+
+  Four roots decided this file:
+    what it is   a zero-dependency TypeScript library about conversation timing
+    voice        declarative and technical; a line belongs here only if it could
+                 sit in the README without changing register
+    temperature  sober, near monochrome, with one moment of expression
+    density      medium; one reading column, instruments run full width
+*/
+
+:root {
+  /* Colour. Named for what the page is about, not for rank.
+     Paper is cooled off deliberately: the warm cream that pairs with a serif
+     display is the most common look in this genre, and the subject is a room
+     going quiet, not a book. */
+  --paper: #f1f3f2;
+  --sheet: #fbfbfa;
+  --ink: #14181b;
+  --graphite: #5f686e;
+  --rule: #d9ddd8;
+
+  /* The one accent. It marks a single thing: the moment the system speaks.
+     Indigo rather than an alert colour, because a turn firing is the expected
+     outcome and not a warning.
+     Measured contrast, sRGB relative luminance:
+       --sheet on --speech   13.1:1   (inverted turn block)
+       --speech on --paper    11.8:1   (links, focus ring) */
+  --speech: #2a2470;
+
+  /* Type. A monospace carries the display role because the subject is
+     timestamps, event names and a deadline in milliseconds; the serif carries
+     running prose so the two roles never blur. */
+  --face-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --face-prose: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  /* Scale. Body 17px at a 68ch measure, stepped by 1.25. Rounded to whole
+     pixels so hairlines and baselines stay crisp. */
+  --size-body: 1.0625rem; /* 17px */
+  --size-lead: 1.3125rem; /* 21px */
+  --size-section: 1.6875rem; /* 27px */
+  --size-title: 2.0625rem; /* 33px */
+
+  /* Space. Base 8, then 1.5 steps. Two half steps exist because hairline
+     labels sit closer to their value than paragraphs sit to each other. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --measure: 68ch;
+  --page: 1080px;
+}
+
+/* Two things this sheet does not have, so their absence reads as a decision
+   rather than an oversight. No corner is rounded: the page is a ruler, a strip
+   and a log, and every one of those objects has square corners in the world it
+   comes from. Nothing casts a shadow: separation is carried by hairlines, which
+   is what a printed instrument would use. */
+
+/* One theme, decided rather than omitted. The page has a single expressive
+   device: an instrument that inverts from paper to ink at the instant a turn
+   fires. On a dark ground that inversion has nowhere to go. Shipping a second
+   palette that nobody opened would be worse than one that was chosen. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--face-prose);
+  font-size: var(--size-body);
+  line-height: 1.62;
+  font-synthesis-weight: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--face-data);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--speech);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--speech);
+  outline-offset: 3px;
+}
+
+code {
+  font-family: var(--face-data);
+  font-size: 0.9em;
+}
+
+.page {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.column {
+  max-width: var(--measure);
+}
+
+/* Masthead ---------------------------------------------------------------- */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordmark {
+  font-family: var(--face-data);
+  font-size: var(--size-lead);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.masthead nav {
+  display: flex;
+  gap: var(--space-5);
+  font-family: var(--face-data);
+  font-size: 0.875rem;
+}
+
+/* Hero -------------------------------------------------------------------- */
+
+.hero {
+  padding: var(--space-8) 0 var(--space-7);
+}
+
+/* The transcript is the page's opening argument, so it is set at reading size
+   rather than as a caption, and each line keeps its own timestamp. */
+.transcript {
+  font-family: var(--face-data);
+  font-size: var(--size-body);
+  line-height: 2;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+  color: var(--graphite);
+}
+
+.transcript b {
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.transcript time {
+  display: inline-block;
+  min-width: 9ch;
+}
+
+/* The hero line leaves the type scale. The scale is built for a 68ch reading
+   column and this line is four words that have to carry the whole page. */
+.thesis {
+  font-family: var(--face-data);
+  font-weight: 500;
+  font-size: clamp(2.0625rem, 5.5vw, 3.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--space-5);
+  max-width: 22ch;
+}
+
+.standfirst {
+  font-size: var(--size-lead);
+  max-width: var(--measure);
+  margin: 0;
+  color: var(--graphite);
+}
+
+.standfirst strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Instrument -------------------------------------------------------------- */
+
+.instrument {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  padding: var(--space-6);
+  margin: var(--space-7) 0 var(--space-9);
+}
+
+.instrument__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.label {
+  font-family: var(--face-data);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.strip {
+  position: relative;
+  height: 132px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.strip__ruler {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 22px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--face-data);
+  font-size: 0.6875rem;
+  color: var(--graphite);
+}
+
+.strip__second {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  padding-top: 3px;
+}
+
+.strip__mark {
+  position: absolute;
+  bottom: 50px;
+  width: 2px;
+  height: 42px;
+  background: var(--ink);
+  transform: translateX(-1px);
+}
+
+.strip__mark--dropped {
+  background: var(--rule);
+  border-left: 1px dashed var(--graphite);
+  width: 0;
+}
+
+/* The turn band is the inversion the whole palette exists for. It sits under
+   the message marks rather than over them, so a reader can see both the
+   balloons and the single turn they became. */
+.strip__turn {
+  position: absolute;
+  bottom: 22px;
+  height: 26px;
+  background: var(--speech);
+  color: var(--sheet);
+  font-family: var(--face-data);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  white-space: nowrap;
+  overflow: hidden;
+  animation: speak 420ms ease-out;
+}
+
+@keyframes speak {
+  from {
+    transform: scaleY(0.4);
+    opacity: 0.2;
+  }
+}
+
+.strip__deadline {
+  position: absolute;
+  top: 8px;
+  bottom: 22px;
+  width: 1px;
+  background: var(--speech);
+  opacity: 0.45;
+}
+
+/* The label hangs to the left of its line: the deadline can sit near the right
+   edge, and a label drawn outward from there is cut off. */
+.strip__deadline::after {
+  content: "deadline";
+  position: absolute;
+  top: 0;
+  right: 4px;
+  font-family: var(--face-data);
+  font-size: 0.6875rem;
+  color: var(--speech);
+}
+
+.strip__now {
+  position: absolute;
+  top: 0;
+  bottom: 22px;
+  width: 1px;
+  background: var(--ink);
+}
+
+.strip--paused {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--paper),
+    var(--paper) 6px,
+    var(--sheet) 6px,
+    var(--sheet) 12px
+  );
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+button {
+  font-family: var(--face-data);
+  font-size: 0.875rem;
+  /* 14px of type on 12px of padding clears 40px of height, which is the floor
+     for a finger on a phone. */
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--sheet);
+  cursor: pointer;
+  transition: background-color 120ms ease-out;
+}
+
+/* Press has to weigh more than hover, or the control feels dead under a
+   finger, where hover never happens at all. */
+button:hover {
+  background: var(--speech);
+  border-color: var(--speech);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+button.secondary:hover {
+  background: var(--paper);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+button.secondary[aria-pressed="true"] {
+  background: var(--speech);
+  border-color: var(--speech);
+  color: var(--sheet);
+}
+
+.counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin: var(--space-6) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rule);
+}
+
+.counters div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-1);
+}
+
+.counters dt {
+  font-family: var(--face-data);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.counters dd {
+  margin: 0;
+  font-family: var(--face-data);
+  font-size: var(--size-section);
+  font-variant-numeric: tabular-nums;
+}
+
+.log {
+  font-family: var(--face-data);
+  font-size: 0.8125rem;
+  line-height: 1.9;
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid var(--rule);
+  height: 132px;
+  overflow-y: auto;
+  color: var(--graphite);
+}
+
+.log__empty {
+  color: var(--graphite);
+}
+
+.log b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.log em {
+  color: var(--speech);
+  font-style: normal;
+}
+
+/* Prose sections ---------------------------------------------------------- */
+
+.section {
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--rule);
+}
+
+.section h2 {
+  font-size: var(--size-title);
+  margin-bottom: var(--space-5);
+}
+
+.section h3 {
+  font-size: var(--size-lead);
+  margin: var(--space-6) 0 var(--space-2);
+}
+
+.section p {
+  margin: 0 0 var(--space-4);
+}
+
+.rule-panel {
+  font-family: var(--face-data);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  padding: var(--space-5);
+  margin: var(--space-5) 0;
+  overflow-x: auto;
+}
+
+pre {
+  font-family: var(--face-data);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  padding: var(--space-5);
+  overflow-x: auto;
+  margin: 0 0 var(--space-4);
+}
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-7);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+}
+
+.figures div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.figures dt {
+  font-family: var(--face-data);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+.figures dd {
+  margin: 0;
+  font-family: var(--face-data);
+  font-size: var(--size-title);
+  font-variant-numeric: tabular-nums;
+}
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding: var(--space-6) 0 var(--space-8);
+  font-family: var(--face-data);
+  font-size: 0.8125rem;
+  color: var(--graphite);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  justify-content: space-between;
+}
+
+/* Narrow screens. The instrument keeps its height; only the padding and the
+   hero line give way. */
+@media (max-width: 640px) {
+  .instrument {
+    padding: var(--space-4);
+  }
+
+  .hero {
+    padding: var(--space-7) 0 var(--space-6);
+  }
+
+  .counters,
+  .figures {
+    gap: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strip__turn {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

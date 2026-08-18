@@ -13,7 +13,8 @@
     "example": "tsx examples/webhook.ts",
     "bench": "tsx bench/coalescing.ts",
     "example:serverless": "tsx examples/serverless.ts",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "build:site": "tsup src/core/index.ts --format esm --out-dir site/vendor --no-clean --no-dts --minify --target es2022"
   },
   "devDependencies": {
     "@types/node": "^22.7.0",

@@ -1,0 +1,111 @@
+<!doctype html>
+<!--
+  Source for site/og.png, the card every pasted link renders as.
+
+  Regenerate at exactly 1200x630:
+    agent-browser set viewport 1200 630
+    agent-browser open file:///path/to/scripts/og-card.html
+    agent-browser screenshot site/og.png
+
+  It repeats the page's own palette and faces rather than inventing a second
+  identity for the card.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>lull social card</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        background: #f1f3f2;
+        color: #14181b;
+        font-family: "Source Serif 4", Georgia, serif;
+        padding: 72px 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .mark {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 28px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+      }
+
+      h1 {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 86px;
+        font-weight: 500;
+        line-height: 1.04;
+        letter-spacing: -0.03em;
+        margin: 0 0 28px;
+        max-width: 20ch;
+      }
+
+      p {
+        font-size: 30px;
+        line-height: 1.45;
+        color: #5f686e;
+        margin: 0;
+        max-width: 42ch;
+      }
+
+      .strip {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        height: 92px;
+      }
+
+      .tick {
+        width: 5px;
+        height: 56px;
+        background: #14181b;
+      }
+
+      .gap {
+        width: 150px;
+      }
+
+      .turn {
+        flex: 1;
+        height: 40px;
+        background: #2a2470;
+        color: #fbfbfa;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mark">lull</div>
+    <div>
+      <h1>Four balloons. Four model calls.</h1>
+      <p>A conversation runtime that waits for the silence and hands your agent one turn.</p>
+    </div>
+    <div class="strip">
+      <span class="tick"></span>
+      <span class="tick"></span>
+      <span class="tick"></span>
+      <span class="tick"></span>
+      <span class="gap"></span>
+      <span class="turn">emitTurn</span>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>lull, a conversation runtime for chat agents</title>
+    <!-- 137 characters: long enough to say what it does, short enough that a
+         search result shows all of it. -->
+    <meta
+      name="description"
+      content="A TypeScript runtime that waits for a conversation to fall quiet, then hands your chat agent one turn instead of four. Zero dependencies."
+    />
+    <link rel="canonical" href="https://luantaraschi.github.io/lull/" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <meta property="og:title" content="lull, a conversation runtime for chat agents" />
+    <meta
+      property="og:description"
+      content="Four balloons, four model calls. lull waits for the silence and hands your agent one turn."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://luantaraschi.github.io/lull/" />
+    <meta property="og:image" content="https://luantaraschi.github.io/lull/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://luantaraschi.github.io/lull/og.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="masthead">
+        <span class="wordmark">lull</span>
+        <nav>
+          <a href="https://github.com/luantaraschi/lull">GitHub</a>
+          <a href="https://github.com/luantaraschi/lull#readme">Docs</a>
+          <a href="https://github.com/luantaraschi/lull/releases/tag/v0.1.0">v0.1.0</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <ol class="transcript">
+            <li><time>19:04:02</time><b>hi</b></li>
+            <li><time>19:04:03</time><b>i wanted to ask</b></li>
+            <li><time>19:04:04</time><b>about the flat</b></li>
+            <li><time>19:04:05</time><b>the one downtown</b></li>
+          </ol>
+          <h1 class="thesis">Four balloons. Four model calls.</h1>
+          <p class="standfirst">
+            One question, answered four times, and the last three replies were written without
+            knowing what the person was still typing. lull waits for the conversation to fall
+            quiet and hands your agent <strong>one turn</strong>.
+          </p>
+        </section>
+
+        <section class="instrument" aria-labelledby="instrument-title">
+          <div class="instrument__head">
+            <h2 id="instrument-title" class="label">Run it</h2>
+            <p class="label" id="policy-note">
+              quietMs 2500 &middot; maxWaitMs 15000 &middot; takeover TTL shortened to 8s here
+            </p>
+          </div>
+
+          <div class="strip" id="strip">
+            <div class="strip__now" id="now"></div>
+            <div class="strip__ruler" id="ruler"></div>
+          </div>
+
+          <div class="controls">
+            <button id="send" type="button">Send a message</button>
+            <button id="takeover" class="secondary" type="button" aria-pressed="false">
+              Human takes over
+            </button>
+            <button id="reset" class="secondary" type="button">Reset</button>
+          </div>
+
+          <dl class="counters">
+            <div>
+              <dt>Messages received</dt>
+              <dd id="count-messages">0</dd>
+            </div>
+            <div>
+              <dt>Turns emitted</dt>
+              <dd id="count-turns">0</dd>
+            </div>
+            <div>
+              <dt>Model calls avoided</dt>
+              <dd id="count-saved">0%</dd>
+            </div>
+          </dl>
+
+          <ol class="log" id="log" aria-live="polite" aria-label="Effects returned by the reducer">
+            <li class="log__empty">
+              Nothing has run yet. Send a message and the effects the reducer returns appear here.
+            </li>
+          </ol>
+        </section>
+
+        <section class="section">
+          <div class="column">
+            <h2>The rule that closes a turn</h2>
+            <p>
+              Every message pushes the first deadline forward. The second one does not move, so
+              somebody who never stops typing still gets an answer.
+            </p>
+          </div>
+          <div class="rule-panel">at &gt;= min(lastMessageAt + quietMs, firstBufferedAt + maxWaitMs)</div>
+          <div class="column">
+            <p>
+              That line is the whole coalescing mechanism. The instrument above runs it: the
+              vertical marker is the deadline, and it slides right each time you send.
+            </p>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="column">
+            <h2>The core never reads the clock</h2>
+            <p>
+              lull is a pure function with a small facade around it. The function takes a state, an
+              event and a policy, and returns the next state plus the effects to run. It creates no
+              timers and touches no network, so the demo above runs the same code your server does,
+              compiled straight from the repository.
+            </p>
+          </div>
+          <pre><code>import { reduce, initialState } from '@luantaraschi/lull/core'
+
+const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
+// effects: emitTurn | schedule | cancel | drop</code></pre>
+          <div class="column">
+            <p>
+              Because time arrives as a number on the event, testing four messages in eight seconds
+              is arithmetic. There are 38 tests and none of them sleep. Three are property based:
+              no message is ever lost, no turn is emitted while a human holds the conversation, and
+              the deduplication window never grows past its bound.
+            </p>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="column">
+            <h2>What it handles</h2>
+            <h3>Fragmented messages</h3>
+            <p>
+              Balloons are buffered and released as one turn after the silence, capped so the wait
+              cannot run away.
+            </p>
+            <h3>Redelivered webhooks</h3>
+            <p>
+              Gateways retry. The same message id twice produces one event, tracked in a window of
+              the last 200 ids per conversation rather than a history that grows forever.
+            </p>
+            <h3>Human takeover</h3>
+            <p>
+              Call takeover and the bot goes quiet for a TTL. Messages arriving meanwhile are
+              dropped rather than queued, so when the TTL lapses the bot does not wake up and
+              answer twenty messages a colleague already handled. Press the button above and watch
+              the strip stop accepting work.
+            </p>
+            <h3>Session expiry</h3>
+            <p>
+              After a period of inactivity the next turn arrives flagged as a new session, which is
+              the cue to reset the model context.
+            </p>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="column">
+            <h2>What it costs</h2>
+            <p>
+              A seeded benchmark of a thousand conversations, typed the way people actually type,
+              with bursts of one to six balloons and a pause for an answer.
+            </p>
+          </div>
+          <dl class="figures">
+            <div>
+              <dt>Messages</dt>
+              <dd>20,888</dd>
+            </div>
+            <div>
+              <dt>Turns</dt>
+              <dd>6,000</dd>
+            </div>
+            <div>
+              <dt>Model calls avoided</dt>
+              <dd>71.3%</dd>
+            </div>
+          </dl>
+          <div class="column">
+            <p style="margin-top: var(--space-6)">
+              Run <code>npm run bench</code> to reproduce the number. The generator is seeded, so
+              it prints the same figure on every machine.
+            </p>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="column">
+            <h2>Where it runs</h2>
+            <p>
+              Node 20 or newer, with no runtime dependencies. State lives behind a four method
+              interface, with an in-memory implementation and a Redis one that takes locks with SET
+              NX PX and releases them with a compare-and-delete script.
+            </p>
+            <p>
+              Where no process stays alive, skip the facade: drive the core from a stateless
+              handler, keep the state in your database, and let an external scheduler deliver the
+              tick.
+            </p>
+          </div>
+          <pre><code>npm i luantaraschi/lull
+
+# not on npm yet; this installs from the repository</code></pre>
+          <div class="column">
+            <p>
+              Known limitation, stated where you can find it: with the facade, timers live in the
+              process that received the message. If that process dies with a turn buffered, the
+              turn waits for the next message instead of firing on time.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span>MIT licensed. Written by Luan Taraschi.</span>
+        <span>
+          <a href="https://github.com/luantaraschi/lull">Source</a> &middot;
+          <a href="https://github.com/luantaraschi/lull/blob/main/docs/writing/why-the-core-is-a-pure-reducer.md">Design notes</a>
+        </span>
+      </footer>
+    </div>
+
+    <script type="module" src="./demo.js"></script>
+  </body>
+</html>

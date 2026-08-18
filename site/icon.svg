@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="lull">
+  <!-- Three messages, then the gap they are waiting out, then the turn. The
+       same reading as the strip on the page, at 16 pixels. -->
+  <rect width="32" height="32" fill="#f1f3f2" />
+  <g fill="#14181b">
+    <rect x="5" y="8" width="3" height="12" />
+    <rect x="11" y="8" width="3" height="12" />
+    <rect x="17" y="8" width="3" height="12" />
+  </g>
+  <rect x="5" y="23" width="22" height="4" fill="#2a2470" />
+</svg>
