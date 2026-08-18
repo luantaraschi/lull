@@ -45,6 +45,16 @@
         "types": "./dist/core/index.d.cts",
         "default": "./dist/core/index.cjs"
       }
+    },
+    "./redis": {
+      "import": {
+        "types": "./dist/redis.d.ts",
+        "default": "./dist/redis.js"
+      },
+      "require": {
+        "types": "./dist/redis.d.cts",
+        "default": "./dist/redis.cjs"
+      }
     }
   },
   "files": [

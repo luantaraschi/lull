@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `redisStore()`, exported from `@luantaraschi/lull/redis`: shared state and
+  cross-instance mutual exclusion. Locks use `SET NX PX` and are released with
+  a compare-and-delete script, so a section that outlives its TTL cannot
+  release its successor's lock. The client is duck-typed, so the package still
+  has no runtime dependencies.
+
 ## [0.1.0] - 2026-08-18
 
 First release.
@@ -31,8 +39,10 @@ First release.
 
 ### Known limitations
 
-- The facade schedules with `setTimeout`, so it runs in a single process.
-  Multiple instances need a store with a due index (`listDue(now)`).
+- The facade schedules with `setTimeout`, so timers live in the process that
+  received the message. `redisStore()` (unreleased) shares state across
+  instances, but a process dying with a turn buffered leaves that turn waiting
+  for the next message.
 - `memoryStore()` keeps state in process memory; it is lost on restart.
 
 [Unreleased]: https://github.com/luantaraschi/lull/compare/v0.1.0...HEAD

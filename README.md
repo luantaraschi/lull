@@ -120,7 +120,28 @@ state: the next event on a conversation decides what has lapsed.
 
 ### Storage
 
-`memoryStore()` is in-process. To go further, implement four methods:
+`memoryStore()` is in-process. For more than one instance, ship the state to
+Redis:
+
+```ts
+import Redis from 'ioredis'
+import { createRuntime } from '@luantaraschi/lull'
+import { redisStore } from '@luantaraschi/lull/redis'
+
+const runtime = createRuntime({ store: redisStore(new Redis(process.env.REDIS_URL)) })
+```
+
+The client is duck-typed — lull has no dependencies and never imports one, so
+any client with ioredis-style `get`/`set`/`del`/`eval` works. Locks are taken
+with `SET NX PX` and released with a compare-and-delete script, so a section
+that outlives its own TTL cannot delete the lock its successor is holding.
+
+What this buys you: shared state and mutual exclusion across instances. What it
+does not: the facade still schedules with `setTimeout` in the process that
+received the message, so if that process dies with a turn buffered, the turn
+waits for the next message rather than firing on time.
+
+To write your own store, implement four methods:
 
 ```ts
 type Store = {
