@@ -1,0 +1,17 @@
+{
+  "name": "@luantaraschi/lull",
+  "version": "0.0.0",
+  "description": "Conversation runtime for chat agents: message coalescing, webhook idempotency, human takeover and session expiry.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.11"
+  }
+}
