@@ -29,9 +29,17 @@ export function reduce(
       return onMessage(state, event, policy)
     case 'tick':
       return onTick(state, event, policy)
-    default:
-      return [state, []]
+    case 'takeover':
+      return onTakeover(state, event, policy)
+    case 'release':
+      return [{ ...state, pausedUntil: null }, []]
   }
+}
+
+/** A takeover expires without a sweep: whoever arrives next clears it. */
+function pauseAt(state: ConversationState, at: number): number | null {
+  if (state.pausedUntil === null) return null
+  return at >= state.pausedUntil ? null : state.pausedUntil
 }
 
 function onMessage(
@@ -46,7 +54,23 @@ function onMessage(
     ]
   }
 
+  const pausedUntil = pauseAt(state, event.at)
   const seen = [...state.seen, event.id].slice(-policy.dedupeWindow)
+
+  if (pausedUntil !== null) {
+    // A human is handling this conversation. Keep the session warm, stay quiet.
+    const paused: ConversationState = {
+      ...state,
+      seen,
+      pausedUntil,
+      lastMessageAt: event.at,
+      session: state.session === null ? null : { ...state.session, lastActivityAt: event.at },
+    }
+    return [
+      paused,
+      [{ type: 'drop', conversationId: state.id, messageId: event.id, reason: 'paused' }],
+    ]
+  }
 
   const session = state.session ?? {
     id: `${state.id}#${event.at}`,
@@ -57,6 +81,7 @@ function onMessage(
   const next: ConversationState = {
     ...state,
     seen,
+    pausedUntil,
     session: { ...session, lastActivityAt: event.at },
     buffer: [...state.buffer, { id: event.id, text: event.text, at: event.at }],
     firstBufferedAt: state.firstBufferedAt ?? event.at,
@@ -71,6 +96,7 @@ function onTick(
   event: Extract<Event, { type: 'tick' }>,
   policy: Policy,
 ): [ConversationState, Effect[]] {
+  if (pauseAt(state, event.at) !== null) return [state, []]
   if (state.buffer.length === 0) return [state, []]
 
   const due = deadline(state, policy)
@@ -101,4 +127,26 @@ function onTick(
   }
 
   return [next, [effect]]
+}
+
+function onTakeover(
+  state: ConversationState,
+  event: Extract<Event, { type: 'takeover' }>,
+  policy: Policy,
+): [ConversationState, Effect[]] {
+  const drops: Effect[] = state.buffer.map((message) => ({
+    type: 'drop',
+    conversationId: state.id,
+    messageId: message.id,
+    reason: 'paused',
+  }))
+
+  const next: ConversationState = {
+    ...state,
+    buffer: [],
+    firstBufferedAt: null,
+    pausedUntil: event.at + policy.takeoverTtlMs,
+  }
+
+  return [next, [{ type: 'cancel', conversationId: state.id }, ...drops]]
 }
