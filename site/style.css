@@ -59,11 +59,17 @@
   /* Motion. Four steps, each tied to what it serves rather than picked per
      callsite. The longest belongs to the turn firing, which is the only event
      on the page that carries weight; nothing else is allowed to take as long.
-     One easing, decelerating, because everything here is something arriving. */
+     One easing, decelerating, because everything here is something arriving.
+     The figure roll below sits outside that rule and says why. */
   --tempo-tap: 90ms;
   --tempo-quick: 160ms;
   --tempo: 260ms;
   --tempo-speak: 420ms;
+  /* The benchmark figures are the exception, and they earn it by not being a
+     response to anything: nobody is waiting on them, and 20,888 needs long
+     enough to be watched arriving rather than glimpsed. Every duration that
+     answers an action stays at or under --tempo-speak. */
+  --tempo-figure: 1100ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -600,7 +606,25 @@ pre {
   margin: 0;
   font-family: var(--face-data);
   font-size: var(--size-title);
+  /* Tabular figures are load-bearing here: these numbers run from zero to
+     20,888, and proportional digits would make the whole row breathe in and
+     out while they counted. */
   font-variant-numeric: tabular-nums;
+}
+
+/* The row lifts while it counts, so the rise and the numbers are one gesture
+   driven by one trigger. The class arrives from figures.js, the same place the
+   counting starts, rather than from a second mechanism that could fall out of
+   step with it. */
+@keyframes lift {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.figures div.counting {
+  animation: lift var(--tempo) var(--ease-out) both;
 }
 
 footer {

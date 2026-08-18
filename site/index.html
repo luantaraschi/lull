@@ -182,15 +182,15 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
           <dl class="figures">
             <div>
               <dt>Messages</dt>
-              <dd>20,888</dd>
+              <dd data-figure="20888">20,888</dd>
             </div>
             <div>
               <dt>Turns</dt>
-              <dd>6,000</dd>
+              <dd data-figure="6000">6,000</dd>
             </div>
             <div>
               <dt>Model calls avoided</dt>
-              <dd>71.3%</dd>
+              <dd data-figure="71.3" data-decimals="1" data-suffix="%">71.3%</dd>
             </div>
           </dl>
           <div class="column">
@@ -238,5 +238,6 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
     </div>
 
     <script type="module" src="./demo.js"></script>
+    <script type="module" src="./figures.js"></script>
   </body>
 </html>
