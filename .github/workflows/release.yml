@@ -19,6 +19,17 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
-      - run: npm publish --provenance --access public
+      - name: Check for publish credentials
+        id: credentials
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN is not set - skipping publish."
+            echo "Add it under Settings > Secrets and variables > Actions, then re-push the tag."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.credentials.outputs.skip != 'true'
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
