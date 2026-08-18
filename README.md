@@ -156,12 +156,31 @@ type Store = {
 together will read-modify-write over each other and lose a message. The
 in-memory store chains promises per id; a Redis store would use `SET NX`.
 
+### Serverless, or anywhere no process stays alive
+
+The facade owns timers, and a serverless function is gone before any timer
+fires. Skip it: drive the core directly and let something outside deliver the
+tick.
+
+```ts
+import { initialState, reduce } from '@luantaraschi/lull/core'
+
+const state = (await db.get(conversationId)) ?? initialState(conversationId)
+const [next, effects] = reduce(state, { type: 'message', id, text, at: Date.now() }, policy)
+await db.put(conversationId, next)
+// `schedule` tells you when to come back: an n8n Wait node, a delayed queue
+// message, a cron row. `emitTurn` is the cue to call your model.
+```
+
+`npm run example:serverless` walks through it. The state is a plain serialisable
+object, so any store will do.
+
 ### Known limitation
 
-The facade schedules with `setTimeout`, so it runs in a single process.
-Multiple instances need a store with a due index (`listDue(now)`) driving the
-ticks; the state is serialisable and the interface is ready for it, but that
-implementation is not shipped.
+With the facade, timers live in the process that received the message. If that
+process dies with a turn buffered, the turn waits for the next message instead
+of firing on time. A store with a due index (`listDue(now)`) driving the ticks
+would close that gap; it is not shipped.
 
 ## Try it
 

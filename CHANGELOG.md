@@ -13,6 +13,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a compare-and-delete script, so a section that outlives its TTL cannot
   release its successor's lock. The client is duck-typed, so the package still
   has no runtime dependencies.
+- A serverless recipe (`npm run example:serverless`) showing how to drive the
+  pure core from stateless handlers, with an external scheduler delivering the
+  ticks.
 
 ## [0.1.0] - 2026-08-18
 

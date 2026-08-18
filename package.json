@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run typecheck && npm run test && npm run build",
     "example": "tsx examples/webhook.ts",
-    "bench": "tsx bench/coalescing.ts"
+    "bench": "tsx bench/coalescing.ts",
+    "example:serverless": "tsx examples/serverless.ts"
   },
   "devDependencies": {
     "@types/node": "^22.7.0",
