@@ -1,5 +1,8 @@
 # lull
 
+[![ci](https://github.com/luantaraschi/lull/actions/workflows/ci.yml/badge.svg)](https://github.com/luantaraschi/lull/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@luantaraschi/lull.svg)](https://www.npmjs.com/package/@luantaraschi/lull)
+
 Your bot answers four times because the user sent four balloons.
 
 ```
