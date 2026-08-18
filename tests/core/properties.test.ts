@@ -49,7 +49,7 @@ function run(events: Event[]): { state: ConversationState; effects: Effect[] } {
 }
 
 describe('properties', () => {
-  test('every message is emitted, dropped, or still buffered — never lost', () => {
+  test('every message is emitted, dropped, or still buffered, never lost', () => {
     fc.assert(
       fc.property(fc.array(step, { maxLength: 40 }), (steps) => {
         const events = timeline(steps)

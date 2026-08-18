@@ -1,8 +1,8 @@
-# lull — Implementation Plan
+# lull: Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Publicar `@luantaraschi/lull`, uma lib TypeScript que resolve os quatro problemas de canal de todo bot de atendimento — webhook duplicado, mensagem fragmentada, takeover humano e sessão expirada.
+**Goal:** Publicar `@luantaraschi/lull`, uma lib TypeScript que resolve os quatro problemas de canal de todo bot de atendimento, webhook duplicado, mensagem fragmentada, takeover humano e sessão expirada.
 
 **Architecture:** Núcleo puro (`reduce(state, event, policy) => [state', Effect[]]`) que nunca lê relógio nem toca rede, com uma fachada por cima que executa os efeitos (timers, emissão de eventos) e uma interface `Store` cuja única implementação entregue é em memória.
 
@@ -14,7 +14,7 @@
 
 - Pacote npm: `@luantaraschi/lull`. Publicação com `--access public --provenance`.
 - Código, comentários, README e mensagens de commit **em inglês**. Só spec e plano em português.
-- `src/core/` não pode importar nada fora de `src/core/` — **zero dependências de runtime** no pacote inteiro (`dependencies: {}`).
+- `src/core/` não pode importar nada fora de `src/core/`, **zero dependências de runtime** no pacote inteiro (`dependencies: {}`).
 - ESM + CJS + tipos, via tsup. Subpath `./core` exportado.
 - Node 20 e 22 no CI. `"type": "module"`, imports internos com extensão `.js`.
 - Toda função do núcleo é pura: nada de `Date.now()`, `Math.random()` ou I/O em `src/core/`.
@@ -171,7 +171,7 @@ describe('message', () => {
 - [ ] **Step 6: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/core/message.test.ts`
-Expected: FAIL — `Failed to resolve import "../../src/core/reduce.js"`.
+Expected: FAIL, `Failed to resolve import "../../src/core/reduce.js"`.
 
 - [ ] **Step 7: Escrever `src/core/types.ts`**
 
@@ -313,7 +313,7 @@ git commit -m "feat(core): buffer messages and schedule the quiet deadline"
 
 **Interfaces:**
 - Consumes: `reduce`, `initialState`, `deadline` (Task 1).
-- Produces: tratamento do evento `{ type: 'tick', at }` — emite `emitTurn` quando vencido, reagenda quando cedo demais, nada quando o buffer está vazio.
+- Produces: tratamento do evento `{ type: 'tick', at }`, emite `emitTurn` quando vencido, reagenda quando cedo demais, nada quando o buffer está vazio.
 
 - [ ] **Step 1: Escrever o teste que falha**
 
@@ -404,7 +404,7 @@ describe('tick', () => {
 - [ ] **Step 2: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/core/turn.test.ts`
-Expected: FAIL — os ticks devolvem `[]` (o `default` do switch), então "reschedules when the tick arrives early" e os dois de emissão quebram.
+Expected: FAIL, os ticks devolvem `[]` (o `default` do switch), então "reschedules when the tick arrives early" e os dois de emissão quebram.
 
 - [ ] **Step 3: Implementar o tratamento de `tick`**
 
@@ -542,7 +542,7 @@ describe('dedupe', () => {
 - [ ] **Step 2: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/core/dedupe.test.ts`
-Expected: FAIL — a duplicata entra no buffer e `state.seen` continua `[]`.
+Expected: FAIL, a duplicata entra no buffer e `state.seen` continua `[]`.
 
 - [ ] **Step 3: Implementar o dedupe**
 
@@ -704,7 +704,7 @@ describe('takeover', () => {
 - [ ] **Step 2: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/core/takeover.test.ts`
-Expected: FAIL — `takeover` e `release` caem no `default` e não fazem nada.
+Expected: FAIL, `takeover` e `release` caem no `default` e não fazem nada.
 
 - [ ] **Step 3: Implementar takeover, release e expiração preguiçosa**
 
@@ -801,7 +801,7 @@ Em `onTick`, como primeira linha do corpo:
 - [ ] **Step 4: Rodar os testes e confirmar que passam**
 
 Run: `npx vitest run && npm run typecheck`
-Expected: todos PASS. O `default` sumiu do switch — o typecheck agora garante exaustividade sobre `Event`.
+Expected: todos PASS. O `default` sumiu do switch, o typecheck agora garante exaustividade sobre `Event`.
 
 - [ ] **Step 5: Commit**
 
@@ -820,7 +820,7 @@ git commit -m "feat(core): pause the bot while a human handles the conversation"
 
 **Interfaces:**
 - Consumes: `reduce`, `initialState` (Task 1).
-- Produces: sessão que expira por inatividade — a mensagem seguinte abre sessão nova, com `turns` zerado, e o turno resultante sai com `isNewSession: true`.
+- Produces: sessão que expira por inatividade, a mensagem seguinte abre sessão nova, com `turns` zerado, e o turno resultante sai com `isNewSession: true`.
 
 - [ ] **Step 1: Escrever o teste que falha**
 
@@ -879,7 +879,7 @@ describe('session', () => {
 - [ ] **Step 2: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/core/session.test.ts`
-Expected: FAIL em "opens a new session after the inactivity TTL" — a sessão `c1#1000` sobrevive e `isNewSession` vem `false`.
+Expected: FAIL em "opens a new session after the inactivity TTL", a sessão `c1#1000` sobrevive e `isNewSession` vem `false`.
 
 - [ ] **Step 3: Implementar a expiração**
 
@@ -925,7 +925,7 @@ git commit -m "feat(core): expire idle sessions and flag the first turn of a new
 - Test: `tests/core/properties.test.ts`
 
 **Interfaces:**
-- Consumes: `reduce`, `initialState` (Tasks 1–5).
+- Consumes: `reduce`, `initialState` (Tasks 1-5).
 - Produces: nenhuma API nova. Três invariantes sobre sequências arbitrárias de eventos.
 
 - [ ] **Step 1: Instalar `fast-check`**
@@ -989,7 +989,7 @@ function run(events: Event[]): { state: ConversationState; effects: Effect[] } {
 }
 
 describe('properties', () => {
-  test('every message is emitted, dropped, or still buffered — never lost', () => {
+  test('every message is emitted, dropped, or still buffered, never lost', () => {
     fc.assert(
       fc.property(fc.array(step, { maxLength: 40 }), (steps) => {
         const events = timeline(steps)
@@ -1040,7 +1040,7 @@ describe('properties', () => {
 - [ ] **Step 3: Rodar o teste**
 
 Run: `npx vitest run tests/core/properties.test.ts`
-Expected: PASS. Se alguma propriedade falhar, o `fast-check` imprime o contraexemplo mínimo — **corrija o núcleo, nunca a propriedade**, e acrescente o contraexemplo como teste de mesa em `tests/core/`.
+Expected: PASS. Se alguma propriedade falhar, o `fast-check` imprime o contraexemplo mínimo, **corrija o núcleo, nunca a propriedade**, e acrescente o contraexemplo como teste de mesa em `tests/core/`.
 
 - [ ] **Step 4: Rodar a suíte inteira com cobertura**
 
@@ -1139,7 +1139,7 @@ describe('memoryStore', () => {
 - [ ] **Step 2: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/store/memory.test.ts`
-Expected: FAIL — `Failed to resolve import "../../src/store/memory.js"`.
+Expected: FAIL, `Failed to resolve import "../../src/store/memory.js"`.
 
 - [ ] **Step 3: Escrever `src/store/types.ts`**
 
@@ -1151,7 +1151,7 @@ import type { ConversationState } from '../core/types.js'
  *
  * `withLock` is not a convenience: two webhooks for the same conversation
  * arriving together would read-modify-write over each other and lose a
- * message. Implementations must serialise per conversation id — a Redis
+ * message. Implementations must serialise per conversation id, a Redis
  * store would use `SET NX` with a TTL.
  */
 export type Store = {
@@ -1231,7 +1231,7 @@ git commit -m "feat(store): add the Store contract and an in-memory implementati
 - Test: `tests/runtime/runtime.test.ts`
 
 **Interfaces:**
-- Consumes: `reduce`, `initialState`, tipos do núcleo (Tasks 1–5); `Store`, `memoryStore` (Task 7).
+- Consumes: `reduce`, `initialState`, tipos do núcleo (Tasks 1-5); `Store`, `memoryStore` (Task 7).
 - Produces: `createRuntime(options: RuntimeOptions): Runtime` com `on`, `ingest`, `takeover`, `release`, `stop`; tipos `Turn`, `Drop`, `RuntimeOptions`, `Runtime`. Reexports públicos em `src/index.ts` e `src/core/index.ts`.
 
 - [ ] **Step 1: Escrever o teste que falha**
@@ -1361,7 +1361,7 @@ describe('createRuntime', () => {
 - [ ] **Step 2: Rodar o teste e confirmar que falha**
 
 Run: `npx vitest run tests/runtime/runtime.test.ts`
-Expected: FAIL — `Failed to resolve import "../../src/runtime/runtime.js"`.
+Expected: FAIL, `Failed to resolve import "../../src/runtime/runtime.js"`.
 
 - [ ] **Step 3: Escrever `src/runtime/runtime.ts`**
 
@@ -1657,7 +1657,7 @@ Expected: `index.js`, `index.cjs`, `index.d.ts`, `core/index.js`, `core/index.cj
 - [ ] **Step 5: Verificar o pacote com `publint` e `attw`**
 
 Run: `npx publint && npx --yes @arethetypeswrong/cli --pack`
-Expected: nenhum problema. Se o `attw` reclamar de resolução ESM/CJS, o culpado costuma ser o exports map — corrija-o, não desative a checagem.
+Expected: nenhum problema. Se o `attw` reclamar de resolução ESM/CJS, o culpado costuma ser o exports map, corrija-o, não desative a checagem.
 
 - [ ] **Step 6: Criar `.github/workflows/ci.yml`**
 
@@ -1733,7 +1733,7 @@ git commit -m "build: ship dual ESM/CJS output and wire CI"
 
 **Interfaces:**
 - Consumes: `createRuntime`, `memoryStore` (Task 8).
-- Produces: `npm run example` — sobe um servidor local, dispara um webhook fragmentado com duplicata e takeover, imprime os turnos. Sem credencial nenhuma.
+- Produces: `npm run example`, sobe um servidor local, dispara um webhook fragmentado com duplicata e takeover, imprime os turnos. Sem credencial nenhuma.
 
 - [ ] **Step 1: Instalar o `tsx`**
 
@@ -1873,8 +1873,8 @@ git commit -m "docs: add a runnable webhook example with no credentials"
 - Modify: `package.json` (script `bench`)
 
 **Interfaces:**
-- Consumes: `reduce`, `initialState` (Tasks 1–5).
-- Produces: `npm run bench` — número reproduzível de redução de chamadas ao LLM. Roda sobre o núcleo puro, sem timers, portanto é determinístico.
+- Consumes: `reduce`, `initialState` (Tasks 1-5).
+- Produces: `npm run bench`, número reproduzível de redução de chamadas ao LLM. Roda sobre o núcleo puro, sem timers, portanto é determinístico.
 
 - [ ] **Step 1: Criar `bench/coalescing.ts`**
 
@@ -1882,8 +1882,8 @@ git commit -m "docs: add a runnable webhook example with no credentials"
 /**
  * How many LLM calls does coalescing save?
  *
- * Simulates conversations where people type the way they actually do — a
- * burst of short balloons, then a pause — and compares one-call-per-message
+ * Simulates conversations where people type the way they actually do, a
+ * burst of short balloons, then a pause, and compares one-call-per-message
  * against one-call-per-turn. Runs on the pure core with a seeded generator,
  * so the number is the same on every machine.
  *
@@ -1964,7 +1964,7 @@ console.log(`LLM calls avoided: ${saved.toFixed(1)}%`)
 - [ ] **Step 3: Rodar o benchmark**
 
 Run: `npm run bench`
-Expected: quatro linhas de saída; `turns` exatamente igual a `CONVERSATIONS * BURSTS_PER_CONVERSATION` (6.000), `messages` por volta de 21.000 (média de 3,5 balões por rajada) e a redução na faixa de 65–75%. **Anote o número real** — ele vai literalmente para o README e para o currículo.
+Expected: quatro linhas de saída; `turns` exatamente igual a `CONVERSATIONS * BURSTS_PER_CONVERSATION` (6.000), `messages` por volta de 21.000 (média de 3,5 balões por rajada) e a redução na faixa de 65-75%. **Anote o número real**: ele vai literalmente para o README e para o currículo.
 
 - [ ] **Step 4: Rodar duas vezes e confirmar que o número é idêntico**
 
@@ -2030,7 +2030,7 @@ await runtime.ingest({ conversationId, messageId, text })
 ```
 
 In a benchmark of 1,000 conversations typed the way people actually type,
-that is **NN% fewer LLM calls** (`npm run bench` — the number is reproducible).
+that is **NN% fewer LLM calls** (`npm run bench`, the number is reproducible).
 
 ## What it handles
 
@@ -2042,7 +2042,7 @@ typing still gets an answer.
 one event, tracked in a bounded window per conversation.
 
 **Human takeover.** `runtime.takeover({ conversationId })` and the bot goes
-quiet for a TTL. Messages that arrive meanwhile are dropped, not queued — when
+quiet for a TTL. Messages that arrive meanwhile are dropped, not queued, when
 the TTL lapses, the bot must not wake up and answer twenty messages a human
 already handled.
 
@@ -2108,7 +2108,7 @@ Lambda without the facade's timers.
 
 **Messages during a takeover are dropped, not buffered.** Keeping them would
 mean the bot returns from its TTL answering a conversation the human already
-closed — the worst possible behaviour in a real support channel.
+closed, the worst possible behaviour in a real support channel.
 
 **Deduplication is a window, not a history.** The last 200 ids per
 conversation. A redelivered webhook arrives within seconds, not days; keeping
@@ -2183,7 +2183,7 @@ Requer o repositório no GitHub e o segredo `NPM_TOKEN` configurado.
 git push origin main --follow-tags
 ```
 
-Expected: o workflow `release` publica `@luantaraschi/lull@0.1.0` com proveniência. Confirme em `https://www.npmjs.com/package/@luantaraschi/lull` — o badge "Provenance" tem que aparecer.
+Expected: o workflow `release` publica `@luantaraschi/lull@0.1.0` com proveniência. Confirme em `https://www.npmjs.com/package/@luantaraschi/lull`, o badge "Provenance" tem que aparecer.
 
 Alternativa manual, se preferir publicar antes de configurar o CI:
 
@@ -2197,6 +2197,6 @@ npm publish --access public
 
 O que fazer com o repositório pronto, já que o objetivo é currículo:
 
-1. **Descrição e topics no GitHub** — `chatbot`, `llm`, `whatsapp`, `typescript`, `agents`. É por aí que alguém tropeça no projeto.
-2. **A linha do currículo**, com o número do bench no lugar de adjetivo: *"@luantaraschi/lull — biblioteca TypeScript de runtime conversacional para agentes de atendimento (coalescing de mensagens, idempotência de webhook, takeover humano). Núcleo puro testado por propriedades; NN% menos chamadas ao LLM em conversas fragmentadas."*
-3. **Um post técnico** sobre a decisão do reducer puro com efeitos declarativos e o porquê de `withLock` — é o conteúdo que circula, e é exatamente o assunto que você quer que apareça na entrevista.
+1. **Descrição e topics no GitHub**: `chatbot`, `llm`, `whatsapp`, `typescript`, `agents`. É por aí que alguém tropeça no projeto.
+2. **A linha do currículo**, com o número do bench no lugar de adjetivo: *"@luantaraschi/lull, biblioteca TypeScript de runtime conversacional para agentes de atendimento (coalescing de mensagens, idempotência de webhook, takeover humano). Núcleo puro testado por propriedades; NN% menos chamadas ao LLM em conversas fragmentadas."*
+3. **Um post técnico** sobre a decisão do reducer puro com efeitos declarativos e o porquê de `withLock`, é o conteúdo que circula, e é exatamente o assunto que você quer que apareça na entrevista.

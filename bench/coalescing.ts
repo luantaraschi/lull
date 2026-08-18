@@ -1,8 +1,8 @@
 /**
  * How many LLM calls does coalescing save?
  *
- * Simulates conversations where people type the way they actually do — a
- * burst of short balloons, then a pause — and compares one-call-per-message
+ * Simulates conversations where people type the way they actually do,
+ * a burst of short balloons and then a pause, and compares one-call-per-message
  * against one-call-per-turn. Runs on the pure core with a seeded generator,
  * so the number is the same on every machine.
  *

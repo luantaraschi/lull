@@ -1,4 +1,4 @@
-# lull — runtime de conversa para agentes de atendimento
+# lull: runtime de conversa para agentes de atendimento
 
 **Data:** 2026-08-18
 **Status:** aprovado (design), pendente de plano de implementação
@@ -15,18 +15,18 @@ lib ocupa.
 
 Objetivo secundário e explícito: servir de peça de portfólio para vagas de
 IA/LLM. Isso justifica investimento em README, exemplo executável e benchmark
-reproduzível — que num projeto interno seriam opcionais.
+reproduzível, que num projeto interno seriam opcionais.
 
 ## 2. Escopo
 
 ### Dentro
 
-1. **Idempotência** — o mesmo `messageId` entregue duas vezes produz um evento só.
-2. **Coalescing por silêncio** — mensagens seguidas viram um turno único, fechado
+1. **Idempotência**: o mesmo `messageId` entregue duas vezes produz um evento só.
+2. **Coalescing por silêncio**: mensagens seguidas viram um turno único, fechado
    após `quietMs` de silêncio, com teto de `maxWaitMs`.
-3. **Takeover humano** — pausa o bot por um TTL; libera por chamada explícita ou
+3. **Takeover humano**: pausa o bot por um TTL; libera por chamada explícita ou
    por vencimento.
-4. **Sessão** — expira por inatividade e sinaliza `isNewSession` no turno seguinte.
+4. **Sessão**: expira por inatividade e sinaliza `isNewSession` no turno seguinte.
 
 ### Fora (declarado no README)
 
@@ -44,7 +44,7 @@ comporta o Redis; o port fica para outro repositório, se valer a pena.
 Núcleo puro com efeitos declarativos, fachada ergonômica por cima.
 
 ```
-src/core/     reduce(state, event) => [state', Effect[]]   — puro, zero dependências
+src/core/     reduce(state, event) => [state', Effect[]]   (puro, zero dependências)
 src/runtime/  fachada: relógio, timers, execução de efeitos, emissão de eventos
 src/store/    interface Store + memoryStore()
 ```
@@ -86,14 +86,14 @@ O turno fecha quando:
 at >= min(lastMessageAt + quietMs, firstBufferedAt + maxWaitMs)
 ```
 
-Cada mensagem nova empurra o primeiro prazo. O segundo é imóvel — é o que
+Cada mensagem nova empurra o primeiro prazo. O segundo é imóvel, é o que
 protege de quem nunca para de digitar.
 
 ### 3.4 Decisões opinativas
 
 **Mensagem durante takeover não vira turno pendente.** Ela atualiza a sessão e
 sai como `drop{reason:'paused'}`. Se ficasse no buffer, o bot voltaria do TTL
-respondendo retroativamente a mensagens que o humano já resolveu — o pior
+respondendo retroativamente a mensagens que o humano já resolveu, o pior
 comportamento possível num atendimento real.
 
 **Dedupe por janela, não por histórico.** Últimos 200 `messageId` por conversa
@@ -125,7 +125,7 @@ store Redis usaria `SET NX` com TTL.
 A fachada agenda com `setTimeout`, portanto opera em um processo só. Rodar em
 várias instâncias exige uma store com índice de vencimento (`listDue(now)`).
 Documentado no README como limitação conhecida, com o caminho de extensão
-descrito — não escondido.
+descrito, não escondido.
 
 ## 4. API pública
 
@@ -168,7 +168,7 @@ Cobertura publicada no README como badge.
 ## 6. Entrega
 
 - **Build:** tsup, saída ESM + CJS + tipos.
-- **CI:** GitHub Actions — typecheck, teste, build em Node 20 e 22.
+- **CI:** GitHub Actions, typecheck, teste, build em Node 20 e 22.
 - **Publicação:** npm com `--provenance` (badge de proveniência assinada).
 - **README:** problema em antes/depois, diagrama ASCII da linha do tempo do
   coalescing, uso em dez linhas, seção "o que esta lib não faz", decisões de
@@ -180,7 +180,7 @@ Cobertura publicada no README como badge.
   a redução de chamadas ao LLM. Gera o número verificável que vai para o
   currículo, no lugar de adjetivo.
 
-**Idioma:** código, comentários, README e mensagens de commit em inglês — o
+**Idioma:** código, comentários, README e mensagens de commit em inglês, o
 público-alvo é internacional. Esta spec e a conversa de design ficam em
 português.
 

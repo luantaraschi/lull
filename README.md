@@ -1,8 +1,15 @@
 # lull
 
 [![ci](https://github.com/luantaraschi/lull/actions/workflows/ci.yml/badge.svg)](https://github.com/luantaraschi/lull/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Your bot answers four times because the user sent four balloons.
+Conversation runtime for chat agents. It handles the four channel problems every
+WhatsApp or support bot ends up rewriting badly: fragmented messages,
+redelivered webhooks, human takeover, and session expiry.
+
+## The problem
+
+Someone types this:
 
 ```
 19:04:02  "hi"
@@ -11,7 +18,7 @@ Your bot answers four times because the user sent four balloons.
 19:04:05  "the one downtown"
 ```
 
-Four webhooks. Four LLM calls. Four replies to a single question, and the last
+Four webhooks. Four model calls. Four replies to a single question, and the last
 three were written without knowing what the user was still typing.
 
 lull waits for the conversation to fall quiet, then hands you one turn:
@@ -30,41 +37,51 @@ runtime.on('turn', async ({ conversationId, messages, isNewSession }) => {
 await runtime.ingest({ conversationId, messageId, text })
 ```
 
-In a benchmark of 1,000 conversations typed the way people actually type,
-that is **71.3% fewer LLM calls** (`npm run bench` — the number is reproducible).
-
-## What it handles
-
-**Fragmented messages.** Balloons are coalesced into one turn, closed after
-`quietMs` of silence and capped by `maxWaitMs` so a user who never stops
-typing still gets an answer.
-
-**Redelivered webhooks.** Gateways retry. The same `messageId` twice produces
-one event, tracked in a bounded window per conversation.
-
-**Human takeover.** `runtime.takeover({ conversationId })` and the bot goes
-quiet for a TTL. Messages that arrive meanwhile are dropped, not queued — when
-the TTL lapses, the bot must not wake up and answer twenty messages a human
-already handled.
-
-**Session expiry.** After `sessionTtlMs` of inactivity the next turn arrives
-with `isNewSession: true`, which is your cue to reset the LLM context.
-
-## What it does not handle
-
-It does not call an LLM. It does not know what WhatsApp is. It does not
-transcribe audio, manage prompts, or store conversation history. It does not
-persist: `Store` is an interface and the only implementation shipped is
-in-memory.
-
-That list is deliberate. lull is the part every chat agent rewrites badly; the
-rest already has good libraries.
+Across 1,000 simulated conversations typed the way people actually type, that is
+**71.3% fewer model calls**: 20,888 messages became 6,000 turns. Run `npm run
+bench` to reproduce the number.
 
 ## Install
 
 ```bash
 npm i @luantaraschi/lull
 ```
+
+The package is not on npm yet. Until it is, install straight from the
+repository:
+
+```bash
+npm i luantaraschi/lull
+```
+
+Node 20 or newer. No runtime dependencies.
+
+## What it handles
+
+Fragmented messages are coalesced into one turn, closed after `quietMs` of
+silence and capped by `maxWaitMs` so a user who never stops typing still gets an
+answer.
+
+Redelivered webhooks produce one event. Gateways retry, and the same `messageId`
+twice is tracked in a bounded window per conversation.
+
+Human takeover silences the bot. Call `runtime.takeover({ conversationId })` and
+it stays quiet for a TTL. Messages arriving in the meantime are dropped rather
+than queued, so when the TTL lapses the bot does not wake up and answer twenty
+messages a colleague already handled.
+
+Sessions expire. After `sessionTtlMs` of inactivity the next turn arrives with
+`isNewSession: true`, which is your cue to reset the model context.
+
+## What it does not handle
+
+It does not call a model. It does not know what WhatsApp is. It does not
+transcribe audio, manage prompts, or store conversation history. It does not
+persist on its own: `Store` is an interface, and the implementations shipped are
+in-memory and Redis.
+
+That list is deliberate. lull is the part every chat agent rewrites badly, and
+the rest already has good libraries.
 
 ## Configuration
 
@@ -75,6 +92,9 @@ npm i @luantaraschi/lull
 | `sessionTtlMs`  | `1800000` | Inactivity after which the next turn starts a session  |
 | `takeoverTtlMs` | `900000`  | How long a human takeover keeps the bot quiet          |
 | `dedupeWindow`  | `200`     | Recent message ids remembered per conversation         |
+
+The runtime also emits `drop` (with a reason of `duplicate` or `paused`) and
+`error`, so you can measure what the bot chose not to answer.
 
 ## Design
 
@@ -91,36 +111,36 @@ Every event carries its own `at`, and the reducer returns effects as data
 (`emitTurn`, `schedule`, `cancel`, `drop`). The facade executes them.
 
 That is why "four messages in eight seconds, then silence" is a test with no
-mocks, no fake timers and no sleeping:
+mocks, no fake timers, and no sleeping:
 
 ```
-message  at 1000  --> buffer, schedule 3500
-message  at 1800  --> buffer, schedule 4300
-message  at 2400  --> buffer, schedule 4900
-tick     at 4900  --> emitTurn ["hi", "i wanted to ask", "about the flat"]
-                             |
-             min(lastMessage + quietMs, firstBuffered + maxWaitMs)
+message  at 1000  ->  buffer, schedule 3500
+message  at 1800  ->  buffer, schedule 4300
+message  at 2400  ->  buffer, schedule 4900
+tick     at 4900  ->  emitTurn ["hi", "i wanted to ask", "about the flat"]
+                              |
+              min(lastMessage + quietMs, firstBuffered + maxWaitMs)
 ```
 
-It also means you can run the core inside a worker, a Durable Object or a
-Lambda without the facade's timers.
+It also means you can run the core inside a worker, a Durable Object, or a
+Lambda without the facade timers.
 
 ### Decisions worth knowing
 
-**Messages during a takeover are dropped, not buffered.** Keeping them would
-mean the bot returns from its TTL answering a conversation the human already
-closed — the worst possible behaviour in a real support channel.
+Messages during a takeover are dropped, not buffered. Keeping them would mean
+the bot returns from its TTL answering a conversation the human already closed,
+which is the worst behaviour available in a real support channel.
 
-**Deduplication is a window, not a history.** The last 200 ids per
-conversation. A redelivered webhook arrives within seconds, not days; keeping
-every id forever is a memory leak dressed up as correctness.
+Deduplication is a window, not a history: the last 200 ids per conversation. A
+redelivered webhook arrives within seconds, not days, and keeping every id
+forever is a memory leak dressed up as correctness.
 
-**Sessions and takeovers expire lazily.** No background sweep, no global
-state: the next event on a conversation decides what has lapsed.
+Sessions and takeovers expire lazily. There is no background sweep and no global
+state. The next event on a conversation decides what has lapsed.
 
-### Storage
+## Storage
 
-`memoryStore()` is in-process. For more than one instance, ship the state to
+`memoryStore()` keeps state in the process. For more than one instance, use
 Redis:
 
 ```ts
@@ -131,15 +151,10 @@ import { redisStore } from '@luantaraschi/lull/redis'
 const runtime = createRuntime({ store: redisStore(new Redis(process.env.REDIS_URL)) })
 ```
 
-The client is duck-typed � lull has no dependencies and never imports one, so
-any client with ioredis-style `get`/`set`/`del`/`eval` works. Locks are taken
-with `SET NX PX` and released with a compare-and-delete script, so a section
-that outlives its own TTL cannot delete the lock its successor is holding.
-
-What this buys you: shared state and mutual exclusion across instances. What it
-does not: the facade still schedules with `setTimeout` in the process that
-received the message, so if that process dies with a turn buffered, the turn
-waits for the next message rather than firing on time.
+The client is duck-typed, so lull never imports one and stays dependency free.
+Any client with ioredis-style `get`, `set`, `del`, and `eval` works. Locks are
+taken with `SET NX PX` and released with a compare-and-delete script, so a
+section that outlives its own TTL cannot delete the lock its successor holds.
 
 To write your own store, implement four methods:
 
@@ -153,10 +168,9 @@ type Store = {
 ```
 
 `withLock` is not optional. Two webhooks for the same conversation arriving
-together will read-modify-write over each other and lose a message. The
-in-memory store chains promises per id; a Redis store would use `SET NX`.
+together will read-modify-write over each other and lose a message.
 
-### Serverless, or anywhere no process stays alive
+## Serverless, or anywhere no process stays alive
 
 The facade owns timers, and a serverless function is gone before any timer
 fires. Skip it: drive the core directly and let something outside deliver the
@@ -180,7 +194,7 @@ object, so any store will do.
 With the facade, timers live in the process that received the message. If that
 process dies with a turn buffered, the turn waits for the next message instead
 of firing on time. A store with a due index (`listDue(now)`) driving the ticks
-would close that gap; it is not shipped.
+would close that gap. It is not shipped.
 
 ## Try it
 
@@ -190,8 +204,26 @@ npm install
 npm run example
 ```
 
-A local webhook, a fragmented burst, a redelivered message and a human taking
+A local webhook, a fragmented burst, a redelivered message, and a human taking
 over. No API keys.
+
+## Tests
+
+```bash
+npm test
+```
+
+38 tests. The reducer is covered by a table of timing scenarios and by three
+property-based tests over random event sequences: no message is ever lost, no
+turn is emitted while the bot is paused, and the dedupe window never grows past
+its bound. The Redis lock has a test that was verified by breaking the
+implementation on purpose to watch it fail.
+
+## More
+
+- [Why the core is a pure reducer](docs/writing/why-the-core-is-a-pure-reducer.md)
+- [Changelog](CHANGELOG.md)
+- [Design spec and implementation plan](docs/superpowers) (in Portuguese)
 
 ## License
 

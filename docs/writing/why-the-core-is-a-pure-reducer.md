@@ -42,7 +42,7 @@ reduce(state, event, policy) => [nextState, effects]
 
 It never reads the clock. It never creates a timer. It never touches the
 network. Every event carries its own timestamp, and the function returns what
-should happen as plain data — `emitTurn`, `schedule`, `cancel`, `drop` — for
+should happen as plain data (`emitTurn`, `schedule`, `cancel`, `drop`) for
 someone else to execute.
 
 That someone else is a thin facade with the timers in it. It is the only part
@@ -62,8 +62,8 @@ expect(effects[0]).toMatchObject({ type: 'emitTurn' })
 ```
 
 No mocks. No fake timers. No sleeping. Four seconds of conversation is four
-numbers. The whole turn-closing rule fits on one line —
-`min(lastMessage + quietMs, firstBuffered + maxWaitMs)` — and you can read it
+numbers. The whole turn-closing rule fits on one line,
+`min(lastMessage + quietMs, firstBuffered + maxWaitMs)`, and you can read it
 without holding a scheduler in your head.
 
 It also means the tests can be generated. Three property-based tests assert
@@ -83,14 +83,14 @@ withLock<T>(conversationId: string, fn: () => Promise<T>): Promise<T>
 ```
 
 Two webhooks for the same conversation arriving together will both read the
-state, both decide, and both write. One of them wins and a message disappears —
+state, both decide, and both write. One of them wins and a message disappears,
 and it disappears rarely, in production, under load, in a way you will not
 reproduce locally.
 
 Making it part of the interface rather than an implementation detail is a way of
 saying: you cannot implement this store correctly without answering this
 question. In memory, it is a promise chain per conversation. In Redis, it is
-`SET NX PX` with a compare-and-delete release — and the compare matters, because
+`SET NX PX` with a compare-and-delete release. The compare matters, because
 a critical section that outlives its own lock TTL would otherwise delete the
 lock its successor is holding. That specific bug has a test, and the test was
 verified by breaking the implementation on purpose to watch it fail.
