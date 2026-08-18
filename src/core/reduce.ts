@@ -39,6 +39,15 @@ function onMessage(
   event: Extract<Event, { type: 'message' }>,
   policy: Policy,
 ): [ConversationState, Effect[]] {
+  if (state.seen.includes(event.id)) {
+    return [
+      state,
+      [{ type: 'drop', conversationId: state.id, messageId: event.id, reason: 'duplicate' }],
+    ]
+  }
+
+  const seen = [...state.seen, event.id].slice(-policy.dedupeWindow)
+
   const session = state.session ?? {
     id: `${state.id}#${event.at}`,
     lastActivityAt: event.at,
@@ -47,6 +56,7 @@ function onMessage(
 
   const next: ConversationState = {
     ...state,
+    seen,
     session: { ...session, lastActivityAt: event.at },
     buffer: [...state.buffer, { id: event.id, text: event.text, at: event.at }],
     firstBufferedAt: state.firstBufferedAt ?? event.at,
