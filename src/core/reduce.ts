@@ -42,6 +42,17 @@ function pauseAt(state: ConversationState, at: number): number | null {
   return at >= state.pausedUntil ? null : state.pausedUntil
 }
 
+/** Sessions expire lazily too: the next message decides whether it inherited one. */
+function sessionFor(
+  state: ConversationState,
+  at: number,
+  policy: Policy,
+): { id: string; lastActivityAt: number; turns: number } {
+  const current = state.session
+  if (current !== null && at - current.lastActivityAt <= policy.sessionTtlMs) return current
+  return { id: `${state.id}#${at}`, lastActivityAt: at, turns: 0 }
+}
+
 function onMessage(
   state: ConversationState,
   event: Extract<Event, { type: 'message' }>,
@@ -72,11 +83,7 @@ function onMessage(
     ]
   }
 
-  const session = state.session ?? {
-    id: `${state.id}#${event.at}`,
-    lastActivityAt: event.at,
-    turns: 0,
-  }
+  const session = sessionFor(state, event.at, policy)
 
   const next: ConversationState = {
     ...state,
