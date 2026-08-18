@@ -55,6 +55,16 @@
 
   --measure: 68ch;
   --page: 1080px;
+
+  /* Motion. Four steps, each tied to what it serves rather than picked per
+     callsite. The longest belongs to the turn firing, which is the only event
+     on the page that carries weight; nothing else is allowed to take as long.
+     One easing, decelerating, because everything here is something arriving. */
+  --tempo-tap: 90ms;
+  --tempo-quick: 160ms;
+  --tempo: 260ms;
+  --tempo-speak: 420ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Two things this sheet does not have, so their absence reads as a decision
@@ -162,7 +172,44 @@ code {
 }
 
 /* The transcript is the page's opening argument, so it is set at reading size
-   rather than as a caption, and each line keeps its own timestamp. */
+   rather than as a caption, and each line keeps its own timestamp.
+
+   It also arrives the way it was typed: one line after another, 80ms apart.
+   That is the page's only load sequence, and it ends before the reader could
+   have finished the first line. */
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.transcript li,
+.thesis,
+.standfirst {
+  animation: arrive var(--tempo) var(--ease-out) both;
+}
+
+.transcript li:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.transcript li:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.transcript li:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.thesis {
+  animation-delay: 340ms;
+}
+
+.standfirst {
+  animation-delay: 420ms;
+}
+
 .transcript {
   font-family: var(--face-data);
   font-size: var(--size-body);
@@ -289,7 +336,7 @@ code {
   padding: 0 var(--space-2);
   white-space: nowrap;
   overflow: hidden;
-  animation: speak 420ms ease-out;
+  animation: speak var(--tempo-speak) var(--ease-out);
 }
 
 @keyframes speak {
@@ -299,6 +346,9 @@ code {
   }
 }
 
+/* The deadline is the one mark that moves for a reason rather than because the
+   window scrolled, so it is the one mark that eases into its new place. Short
+   enough that the per-frame scroll still reads as continuous. */
 .strip__deadline {
   position: absolute;
   top: 8px;
@@ -306,6 +356,7 @@ code {
   width: 1px;
   background: var(--speech);
   opacity: 0.45;
+  transition: left var(--tempo-quick) var(--ease-out);
 }
 
 /* The label hangs to the left of its line: the deadline can sit near the right
@@ -328,14 +379,27 @@ code {
   background: var(--ink);
 }
 
-.strip--paused {
+/* A gradient cannot be transitioned, so the hatch lives in an overlay whose
+   opacity can. Fading it in reads as the bot standing down; switching it on
+   reads as a glitch. */
+.strip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--tempo) var(--ease-out);
   background: repeating-linear-gradient(
     -45deg,
-    var(--paper),
-    var(--paper) 6px,
+    transparent,
+    transparent 6px,
     var(--sheet) 6px,
     var(--sheet) 12px
   );
+}
+
+.strip--paused::after {
+  opacity: 1;
 }
 
 .controls {
@@ -355,7 +419,9 @@ button {
   background: var(--ink);
   color: var(--sheet);
   cursor: pointer;
-  transition: background-color 120ms ease-out;
+  transition:
+    background-color var(--tempo-quick) var(--ease-out),
+    transform var(--tempo-tap) var(--ease-out);
 }
 
 /* Press has to weigh more than hover, or the control feels dead under a
@@ -414,7 +480,20 @@ button.secondary[aria-pressed="true"] {
   margin: 0;
   font-family: var(--face-data);
   font-size: var(--size-section);
+  /* Tabular figures: the counters change while you watch, and proportional
+     digits would shift the label under every update. */
   font-variant-numeric: tabular-nums;
+}
+
+@keyframes land {
+  from {
+    opacity: 0.45;
+    transform: translateY(-2px);
+  }
+}
+
+.counters dd.changed {
+  animation: land var(--tempo) var(--ease-out);
 }
 
 .log {
@@ -432,6 +511,17 @@ button.secondary[aria-pressed="true"] {
 
 .log__empty {
   color: var(--graphite);
+}
+
+@keyframes log-line {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.log li {
+  animation: log-line var(--tempo-quick) var(--ease-out);
 }
 
 .log b {
@@ -542,14 +632,14 @@ footer {
   }
 }
 
+/* Everything above is optional. Under a reduced-motion preference the page
+   still reports every state; it simply stops moving between them. */
 @media (prefers-reduced-motion: reduce) {
-  .strip__turn {
-    animation: none;
-  }
-
   *,
   *::before,
   *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

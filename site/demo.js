@@ -121,15 +121,48 @@ function run(effect) {
   }
 }
 
+/* Counters count rather than swap. A number that jumps from 0 to 75 reads as a
+   different number appearing; one that runs there reads as the same number
+   moving, which is what it is. 260ms, the same step the rest of the page uses
+   for a change of state. */
+const COUNT_MS = 260
+const counterFrom = new WeakMap()
+
+function setCounter(node, value, suffix = '') {
+  const from = counterFrom.get(node) ?? 0
+  if (from === value) return
+  counterFrom.set(node, value)
+
+  node.classList.remove('changed')
+  // Reading offsetWidth restarts the animation; without it a second change
+  // inside the same run would not play.
+  void node.offsetWidth
+  node.classList.add('changed')
+
+  if (reducedMotion.matches) {
+    node.textContent = `${value}${suffix}`
+    return
+  }
+
+  const start = performance.now()
+  const step = (frame) => {
+    const progress = Math.min((frame - start) / COUNT_MS, 1)
+    // Decelerating, so the last digits settle instead of snapping.
+    const eased = 1 - Math.pow(1 - progress, 3)
+    node.textContent = `${Math.round(from + (value - from) * eased)}${suffix}`
+    if (progress < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
 function render() {
-  countMessages.textContent = String(sent)
-  countTurns.textContent = String(turns)
+  setCounter(countMessages, sent)
+  setCounter(countTurns, turns)
   // Buffered messages have not been avoided yet, they are still waiting. Only
   // messages the reducer has resolved into a turn or a drop count here, so the
   // figure never claims a saving the run has not made.
   const resolved = sent - state.buffer.length
-  countSaved.textContent =
-    resolved === 0 ? '0%' : `${Math.round(((resolved - turns) / resolved) * 100)}%`
+  setCounter(countSaved, resolved === 0 ? 0 : Math.round(((resolved - turns) / resolved) * 100), '%')
   strip.classList.toggle('strip--paused', paused)
   takeoverButton.setAttribute('aria-pressed', String(paused))
   takeoverButton.textContent = paused ? 'Human releases it' : 'Human takes over'
