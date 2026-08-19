@@ -1,0 +1,60 @@
+name: Bug report
+description: Something the runtime does that it should not
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The core is a pure function, so most bugs can be written down as events in and effects out.
+        A report in that shape is halfway to a fix.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: sequence
+    attributes:
+      label: The sequence
+      description: The policy you were running, and the events with the timestamps you passed on them.
+      render: ts
+      placeholder: |
+        const policy = { quietMs: 5_000, maxWaitMs: 15_000, sessionTtlMs: 1_800_000, takeoverTtlMs: 900_000, dedupeWindow: 200 }
+
+        reduce(state, { type: 'message', id: 'm1', text: 'hi', at: 0 }, policy)
+        reduce(state, { type: 'typing', at: 4_000 }, policy)
+        reduce(state, { type: 'tick', at: 5_000 }, policy)
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: lull version
+      placeholder: 0.3.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: store
+    attributes:
+      label: Store
+      options:
+        - memoryStore()
+        - redisStore()
+        - One of my own
+        - None, I drive the core directly
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: '20.11.0'
+    validations:
+      required: false

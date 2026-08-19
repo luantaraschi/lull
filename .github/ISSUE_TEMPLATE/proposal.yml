@@ -1,0 +1,36 @@
+name: Proposal
+description: A change to behaviour, an option, or the public API
+labels: ['proposal']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        lull is small on purpose. The most useful proposals say what problem they solve before
+        they say what they add, because the answer is sometimes a smaller change than the one
+        being proposed.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you unable to do today, and what have you tried instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: What you have in mind
+      description: The shape of it. Code is welcome but a paragraph is enough to start.
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: How it sits with the constraints
+      description: |
+        The core is a pure function with no dependencies and serializable state, and defaults are
+        measured rather than chosen. If your proposal touches one of those, say how.
+    validations:
+      required: false

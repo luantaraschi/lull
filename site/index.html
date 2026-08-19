@@ -235,7 +235,8 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
           <div class="column">
             <p>
               Because time arrives as a number on the event, testing four messages in eight seconds
-              is arithmetic. There are 38 tests and none of them sleep. Three are property based: no message is ever lost, no turn is emitted while a human holds the
+              is arithmetic. There are 46 tests, and the 25 over the reducer never sleep. Three are
+              property based: no message is ever lost, no turn is emitted while a human holds the
               conversation, and the deduplication window never grows past its bound.
             </p>
           </div>

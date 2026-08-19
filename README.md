@@ -227,11 +227,20 @@ over. No API keys.
 npm test
 ```
 
-38 tests. The reducer is covered by a table of timing scenarios and by three
+46 tests. The reducer is covered by a table of timing scenarios and by three
 property-based tests over random event sequences: no message is ever lost, no
 turn is emitted while the bot is paused, and the dedupe window never grows past
 its bound. The Redis lock has a test that was verified by breaking the
 implementation on purpose to watch it fail.
+
+## Contributing
+
+Issues and pull requests are welcome. Because the core is a pure function, a bug
+report can usually be written as events in and effects out, which is the fastest
+kind to fix. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup, the workflow and
+the constraints a change has to respect: the core stays pure, the package keeps
+no runtime dependencies, its tests do not sleep, and defaults are measured
+rather than chosen.
 
 ## More
 
