@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question about using lull
+    url: https://github.com/luantaraschi/lull/discussions/categories/q-a
+    about: How to wire it to your channel, what to set quietMs to, why a turn arrived late. Ask in Discussions and the answer stays where the next person will find it.
+  - name: Something you built with it
+    url: https://github.com/luantaraschi/lull/discussions/categories/show-and-tell
+    about: Show and tell.
