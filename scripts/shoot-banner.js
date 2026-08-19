@@ -1,11 +1,8 @@
 /*
-  Renders scripts/banner.html into assets/banner.png and assets/banner-dark.png.
+  Renders scripts/banner.html into the transparent PNGs used by README.
 
-  The card is laid out at 1280x400 and shot at twice that, so the type stays
-  crisp on a retina screen while the README displays it at its logical width.
-
-  It drives a Chrome over the DevTools protocol, which is the same way
-  site/og.png is made, and needs one running with a debugging port:
+  It drives a Chrome over the DevTools protocol and needs one running with a
+  debugging port:
 
     chrome --remote-debugging-port=9222 --user-data-dir=/tmp/shot about:blank
     node scripts/shoot-banner.js
@@ -17,12 +14,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const ENDPOINT = process.env.CDP_ENDPOINT ?? 'http://127.0.0.1:9222'
 const WIDTH = 1280
-const HEIGHT = 440
-const SCALE = 2
+const HEIGHT = 280
+const SCALE = 1
 
 const shots = [
-  { hash: '', file: 'banner.png' },
-  { hash: '#dark', file: 'banner-dark.png' },
+  { hash: '', file: 'lull-wordmark-light.png' },
+  { hash: '#dark', file: 'lull-wordmark-dark.png' },
 ]
 
 async function pageTarget() {
@@ -69,6 +66,9 @@ async function main() {
   const socket = await connect(page.webSocketDebuggerUrl)
 
   await send(socket, 'Page.enable', {})
+  await send(socket, 'Emulation.setDefaultBackgroundColorOverride', {
+    color: { r: 0, g: 0, b: 0, a: 0 },
+  })
   await send(socket, 'Emulation.setDeviceMetricsOverride', {
     width: WIDTH,
     height: HEIGHT,
@@ -77,17 +77,14 @@ async function main() {
   })
 
   for (const shot of shots) {
-    // The hash alone does not reload, so every shot navigates from scratch.
     await send(socket, 'Page.navigate', { url: 'about:blank' })
     await send(socket, 'Page.navigate', { url: `${source}${shot.hash}` })
 
-    // The faces come from Google Fonts, and a card shot before they land is a
-    // card set in the fallback.
     for (let attempt = 0; attempt < 40; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 100))
       const ready = await send(socket, 'Runtime.evaluate', {
         expression:
-          'document.fonts.status === "loaded" && document.fonts.check("500 26px \'IBM Plex Mono\'")',
+          'document.fonts.status === "loaded" && document.fonts.check("500 176px \'IBM Plex Mono\'")',
         returnByValue: true,
       })
       if (ready.result.value === true) break
@@ -99,8 +96,6 @@ async function main() {
     const image = await send(socket, 'Page.captureScreenshot', {
       format: 'png',
       captureBeyondViewport: true,
-      // The scale is already on the device metrics; asking for it twice gives a
-      // shot at four times the size.
       clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT, scale: 1 },
     })
     const file = path.join(out, shot.file)
@@ -108,6 +103,7 @@ async function main() {
     console.log(`wrote ${path.relative(root, file)} at ${WIDTH * SCALE}x${HEIGHT * SCALE}`)
   }
 
+  await send(socket, 'Emulation.setDefaultBackgroundColorOverride', {})
   await send(socket, 'Emulation.clearDeviceMetricsOverride', {})
   socket.close()
 }

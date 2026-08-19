@@ -1,10 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png" />
-  <img
-    src="assets/banner.png"
-    alt="lull: four webhooks between 19:04:02 and 19:04:05, gathered by five seconds of quiet into one turn at 19:04:10, one model call."
-    width="1280"
-  />
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/lull-wordmark-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/lull-wordmark-light.png">
+  <img alt="lull" src="./assets/lull-wordmark-light.png" width="100%">
 </picture>
 
 [![ci](https://github.com/luantaraschi/lull/actions/workflows/ci.yml/badge.svg)](https://github.com/luantaraschi/lull/actions/workflows/ci.yml)

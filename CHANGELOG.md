@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The README now uses a transparent, theme-aware `lull` wordmark, with editable
+  HTML source and matching PNG exports included in the npm package.
 - `quietMs` now defaults to `5000`, where it was `2500`. The sweep behind
   [Choosing quietMs](docs/tuning.md) has the bot answering before the person had
   finished in 47% of bursts at 2500 and 25% at 5000, while avoiding more model

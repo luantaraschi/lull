@@ -68,6 +68,7 @@
     }
   },
   "files": [
+    "assets",
     "dist",
     "README.md",
     "CHANGELOG.md",
