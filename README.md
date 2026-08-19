@@ -85,7 +85,7 @@ the rest already has good libraries.
 
 | Option          | Default   | What it does                                          |
 | --------------- | --------- | ----------------------------------------------------- |
-| `quietMs`       | `2500`    | Silence that closes a turn                            |
+| `quietMs`       | `5000`    | Silence that closes a turn                            |
 | `maxWaitMs`     | `15000`   | Hard cap from the first buffered message              |
 | `sessionTtlMs`  | `1800000` | Inactivity after which the next turn starts a session |
 | `takeoverTtlMs` | `900000`  | How long a human takeover keeps the bot quiet         |
@@ -97,7 +97,7 @@ option and event is listed in the [API reference](docs/api.md).
 
 `quietMs` is worth measuring rather than guessing. In a simulation of a thousand
 conversations, the default has the bot answering before the person finished in
-47% of bursts; at 6000 that falls to 14%. See
+25% of bursts; at 2500 that was 47%, and at 6000 it falls to 14%. See
 [choosing quietMs](docs/tuning.md), or run `npm run bench:sweep`. If your channel
 reports when somebody is composing, pass it along with
 `runtime.typing({ conversationId })`: it holds an open turn open while they

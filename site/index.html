@@ -133,7 +133,7 @@
                     min="200"
                     max="8000"
                     step="100"
-                    value="2500"
+                    value="5000"
                   />
                   <span class="fader__value" id="policy-quiet-value" aria-hidden="true"></span>
                 </div>
@@ -235,9 +235,8 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
           <div class="column">
             <p>
               Because time arrives as a number on the event, testing four messages in eight seconds
-              is arithmetic. There are 38 tests and none of them sleep. Three are property based: no
-              message is ever lost, no turn is emitted while a human holds the conversation, and the
-              deduplication window never grows past its bound.
+              is arithmetic. There are 38 tests and none of them sleep. Three are property based: no message is ever lost, no turn is emitted while a human holds the
+              conversation, and the deduplication window never grows past its bound.
             </p>
           </div>
         </section>
@@ -248,11 +247,11 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
             <h3>Fragmented messages</h3>
             <p>
               Balloons are buffered and released as one turn after the silence, capped so the wait
-              cannot run away. How long to wait is the one number worth measuring: at the 2.5s
-              default a simulation has the bot answering before the person finished in 47% of
-              bursts, and at 6s that falls to 14%. Better still, feed it the typing event your
-              channel already emits and the turn stays open while they compose. Start typing in the
-              composer above and watch the deadline move while no message arrives.
+              cannot run away. How long to wait is the one number worth measuring: at the 5s default
+              a simulation has the bot answering before the person finished in 25% of bursts, and at
+              6s that falls to 14%. Better still, feed it the typing event your channel already
+              emits and the turn stays open while they compose. Start typing in the composer above
+              and watch the deadline move while no message arrives.
             </p>
             <h3>Redelivered webhooks</h3>
             <p>

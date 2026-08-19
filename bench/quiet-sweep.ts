@@ -18,7 +18,7 @@ import type { ConversationState, Event, Policy } from '../src/core/types.js'
 
 const CONVERSATIONS = 1_000
 const BURSTS_PER_CONVERSATION = 6
-const QUIET_VALUES = [1_500, 2_500, 4_000, 6_000, 8_000, 12_000]
+const QUIET_VALUES = [1_500, 2_500, 4_000, 5_000, 6_000, 8_000, 12_000]
 
 function rng(seed: number): () => number {
   let a = seed

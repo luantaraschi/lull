@@ -12,7 +12,7 @@ import { initialState, reduce } from '../src/core/reduce.js'
 import type { ConversationState, Event, Policy } from '../src/core/types.js'
 
 const policy: Policy = {
-  quietMs: 2_500,
+  quietMs: 5_000,
   maxWaitMs: 15_000,
   sessionTtlMs: 1_800_000,
   takeoverTtlMs: 900_000,

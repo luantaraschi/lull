@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `quietMs` now defaults to `5000`, where it was `2500`. The sweep behind
+  [Choosing quietMs](docs/tuning.md) has the bot answering before the person had
+  finished in 47% of bursts at 2500 and 25% at 5000, while avoiding more model
+  calls at the same time, so the old default was buying interruptions and
+  nothing else. Pass `quietMs: 2_500` to keep the previous behaviour.
+
 ## [0.3.0] - 2026-08-19
 
 ### Added

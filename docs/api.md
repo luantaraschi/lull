@@ -18,7 +18,7 @@ Returns a `Runtime`. Nothing starts until the first event arrives.
 ```ts
 const runtime = createRuntime({
   store: memoryStore(),
-  quietMs: 2_500,
+  quietMs: 5_000,
   maxWaitMs: 15_000,
   sessionTtlMs: 1_800_000,
   takeoverTtlMs: 900_000,
@@ -30,7 +30,7 @@ const runtime = createRuntime({
 | Option          | Type                      | Default    | Meaning                                               |
 | --------------- | ------------------------- | ---------- | ----------------------------------------------------- |
 | `store`         | `Store`                   | required   | Where conversation state lives between events         |
-| `quietMs`       | `number`                  | `2500`     | Silence that closes a turn                            |
+| `quietMs`       | `number`                  | `5000`     | Silence that closes a turn                            |
 | `maxWaitMs`     | `number`                  | `15000`    | Hard cap measured from the first buffered message     |
 | `sessionTtlMs`  | `number`                  | `1800000`  | Inactivity after which the next turn starts a session |
 | `takeoverTtlMs` | `number`                  | `900000`   | How long a human takeover keeps the bot quiet         |
