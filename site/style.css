@@ -126,7 +126,8 @@ a {
 }
 
 a:focus-visible,
-button:focus-visible {
+button:focus-visible,
+input:focus-visible {
   outline: 2px solid var(--speech);
   outline-offset: 3px;
 }
@@ -540,6 +541,240 @@ button.secondary[aria-pressed='true'] {
   font-style: normal;
 }
 
+/* Conversation ------------------------------------------------------------ */
+
+/* Two views of one run. The conversation is what the person sees and the strip
+   is what the runtime sees, so they sit side by side rather than one under the
+   other: the whole point is that a keystroke on the left moves a marker on the
+   right, and a reader who has to scroll between them never catches it. */
+.instrument__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: stretch;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.chat__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.chat__state {
+  font-family: var(--face-data);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--graphite);
+}
+
+.chat__state[data-state='paused'] {
+  color: var(--speech);
+}
+
+/* The basis rather than a height: on a wide screen the row is as tall as the
+   strip column beside it and the thread takes the difference, and on a narrow
+   one it keeps its own size and scrolls. */
+.chat__thread {
+  flex: 1 1 300px;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The thread fills from the bottom, the way a conversation does. The auto
+   margin does it rather than justify-content, which in a scrolling flex column
+   puts the oldest messages out of reach once the thread overflows. */
+.chat__thread > :first-child {
+  margin-top: auto;
+}
+
+.chat__empty {
+  color: var(--graphite);
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+/* One group is one run of balloons that will become one turn. It is the only
+   element on the page whose height is animated, and only at the moment the
+   balloons inside it are replaced by the block they became. */
+.chat__group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  overflow: hidden;
+  transition: height var(--tempo-speak) var(--ease-out);
+}
+
+.balloon {
+  max-width: 85%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  font-family: var(--face-data);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  animation: arrive var(--tempo-quick) var(--ease-out);
+}
+
+/* A dropped balloon stays legible. It was received, it was read, and then it
+   was refused; greying it out and saying why is the whole story. */
+.balloon--dropped {
+  border-style: dashed;
+  background: transparent;
+  color: var(--graphite);
+}
+
+.balloon__tag {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+
+/* The countdown under the open group. It is the deadline written out in words
+   and a bar that drains toward it, and both restart when a keystroke pushes
+   the deadline back, which is the one thing a still image cannot show. */
+.chat__wait {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--face-data);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--graphite);
+}
+
+.chat__wait-left {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.chat__wait-bar {
+  grid-column: 1 / -1;
+  height: 2px;
+  background: var(--rule);
+}
+
+.chat__wait-bar i {
+  display: block;
+  height: 100%;
+  background: var(--speech);
+  transform-origin: left center;
+  /* Slightly longer than the tick that sets it, so the drain reads as one
+     movement rather than ten steps a second. */
+  transition: transform var(--tempo-quick) linear;
+}
+
+/* The inversion the palette exists for, in the second place it can happen: the
+   balloons leave and this arrives in their place. */
+.chat__turn {
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--speech);
+  color: var(--sheet);
+  font-family: var(--face-data);
+  animation: speak var(--tempo-speak) var(--ease-out);
+  transform-origin: bottom;
+}
+
+.chat__turn-head {
+  display: block;
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.72;
+  margin-bottom: var(--space-2);
+}
+
+.chat__turn-text {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* Three dots would be a second expressive device on a page that decided to
+   have one. The chip says it in the same voice as everything else. */
+.chat__typing {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-2);
+  font-family: var(--face-data);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--speech);
+  animation: arrive var(--tempo-quick) var(--ease-out);
+}
+
+.chat__typing[hidden] {
+  display: none;
+}
+
+.composer {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--rule);
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--face-data);
+  font-size: 0.875rem;
+  padding: var(--space-3);
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  color: var(--ink);
+}
+
+.composer input::placeholder {
+  color: var(--graphite);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.secondary:disabled:hover {
+  background: transparent;
+  border-color: var(--rule);
+}
+
+/* Below this the two views stack, and the conversation goes first: it is the
+   one the visitor types into. */
+@media (max-width: 900px) {
+  .instrument__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .chat__thread {
+    flex-basis: 240px;
+  }
+}
+
 /* Prose sections ---------------------------------------------------------- */
 
 .section {
@@ -659,6 +894,10 @@ footer {
 /* Everything above is optional. Under a reduced-motion preference the page
    still reports every state; it simply stops moving between them. */
 @media (prefers-reduced-motion: reduce) {
+  .chat__wait-bar {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {

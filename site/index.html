@@ -67,40 +67,81 @@
             </p>
           </div>
 
-          <div class="strip" id="strip">
-            <div class="strip__now" id="now"></div>
-            <div class="strip__ruler" id="ruler"></div>
+          <div class="instrument__grid">
+            <div class="chat">
+              <div class="chat__head">
+                <span class="label">Conversation</span>
+                <span class="chat__state" id="chat-state" data-state="listening"
+                  >bot listening</span
+                >
+              </div>
+
+              <ol class="chat__thread" id="thread" aria-label="The conversation you are typing">
+                <li class="chat__empty">
+                  Type a few short messages, the way somebody types on WhatsApp. lull buffers them
+                  and hands your agent one turn.
+                </li>
+              </ol>
+
+              <p class="chat__typing" id="typing" hidden></p>
+
+              <form class="composer" id="composer" autocomplete="off">
+                <input
+                  id="input"
+                  name="message"
+                  type="text"
+                  maxlength="120"
+                  aria-label="Message"
+                  placeholder="say hi, then keep typing"
+                />
+                <button type="submit">Send</button>
+              </form>
+            </div>
+
+            <div class="scope">
+              <div class="strip" id="strip">
+                <div class="strip__now" id="now"></div>
+                <div class="strip__ruler" id="ruler"></div>
+              </div>
+
+              <div class="controls">
+                <button id="redeliver" class="secondary" type="button" disabled>
+                  Redeliver last webhook
+                </button>
+                <button id="takeover" class="secondary" type="button" aria-pressed="false">
+                  Human takes over
+                </button>
+                <button id="reset" class="secondary" type="button">Reset</button>
+              </div>
+
+              <dl class="counters">
+                <div>
+                  <dt>Messages received</dt>
+                  <dd id="count-messages">0</dd>
+                </div>
+                <div>
+                  <dt>Turns emitted</dt>
+                  <dd id="count-turns">0</dd>
+                </div>
+                <div>
+                  <dt>Model calls avoided</dt>
+                  <dd id="count-saved">0%</dd>
+                </div>
+              </dl>
+
+              <ol
+                class="log"
+                id="log"
+                aria-live="polite"
+                aria-label="Effects returned by the reducer"
+              >
+                <li class="log__empty">
+                  Nothing has run yet. Send a message and the effects the reducer returns appear
+                  here.
+                </li>
+              </ol>
+            </div>
           </div>
-
-          <div class="controls">
-            <button id="send" type="button">Send a message</button>
-            <button id="typing" class="secondary" type="button">Person is typing</button>
-            <button id="takeover" class="secondary" type="button" aria-pressed="false">
-              Human takes over
-            </button>
-            <button id="reset" class="secondary" type="button">Reset</button>
-          </div>
-
-          <dl class="counters">
-            <div>
-              <dt>Messages received</dt>
-              <dd id="count-messages">0</dd>
-            </div>
-            <div>
-              <dt>Turns emitted</dt>
-              <dd id="count-turns">0</dd>
-            </div>
-            <div>
-              <dt>Model calls avoided</dt>
-              <dd id="count-saved">0%</dd>
-            </div>
-          </dl>
-
-          <ol class="log" id="log" aria-live="polite" aria-label="Effects returned by the reducer">
-            <li class="log__empty">
-              Nothing has run yet. Send a message and the effects the reducer returns appear here.
-            </li>
-          </ol>
         </section>
 
         <section class="section">
@@ -155,20 +196,22 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
               cannot run away. How long to wait is the one number worth measuring: at the 2.5s
               default a simulation has the bot answering before the person finished in 47% of
               bursts, and at 6s that falls to 14%. Better still, feed it the typing event your
-              channel already emits and the turn stays open while they compose. Press
-              <em>Person is typing</em> above and watch the deadline move with no message arriving.
+              channel already emits and the turn stays open while they compose. Start typing in the
+              composer above and watch the deadline move while no message arrives.
             </p>
             <h3>Redelivered webhooks</h3>
             <p>
               Gateways retry. The same message id twice produces one event, tracked in a window of
-              the last 200 ids per conversation rather than a history that grows forever.
+              the last 200 ids per conversation rather than a history that grows forever. Press
+              <em>Redeliver last webhook</em> above and the copy arrives, is recognised and is
+              dropped, without disturbing the turn the original is still waiting in.
             </p>
             <h3>Human takeover</h3>
             <p>
               Call takeover and the bot goes quiet for a TTL. Messages arriving meanwhile are
               dropped rather than queued, so when the TTL lapses the bot does not wake up and answer
-              twenty messages a colleague already handled. Press the button above and watch the
-              strip stop accepting work.
+              twenty messages a colleague already handled. Press the button above and watch what you
+              send arrive dropped rather than buffered.
             </p>
             <h3>Session expiry</h3>
             <p>

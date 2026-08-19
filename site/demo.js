@@ -3,9 +3,13 @@
 
   It drives the real reducer, bundled from src/core at deploy time, with the
   same facade shape the library ships: effects come back as data, and this file
-  is the only thing here that owns a timer or reads a clock.
+  is the only thing here that owns a timer or reads a clock. The two views it
+  writes to, the conversation and the strip, are handed text and numbers and
+  decide nothing for themselves.
 */
-import { initialState, reduce } from './vendor/index.js'
+import { deadline, initialState, reduce } from './vendor/index.js'
+import { createChat } from './chat.js'
+import { createStrip } from './strip.js'
 
 const POLICY = {
   quietMs: 2_500,
@@ -18,58 +22,65 @@ const POLICY = {
   dedupeWindow: 200,
 }
 
-/* The window the strip shows. The headroom is 4s rather than 2s because the
-   deadline sits quietMs ahead of the last message, and a marker drawn past the
-   right edge is a marker nobody can read. */
-const PAST_MS = 18_000
-const AHEAD_MS = 4_000
-const SPAN_MS = PAST_MS + AHEAD_MS
+/* A channel reports composing on a cadence rather than per keystroke, so the
+   page throttles the same way a gateway would before the webhook is sent. The
+   chip stays lit a little longer than the gap, or it would blink between two
+   words. */
+const TYPING_EVERY_MS = 900
+const TYPING_LIT_MS = 1_500
 
-const FRAGMENTS = [
-  'hi',
-  'i wanted to ask',
-  'about the flat',
-  'the one downtown',
-  'is it still available',
-  'and the price',
-  'can i visit tomorrow',
-  'morning would be better',
-]
+/* The countdown carries one decimal because it is the number the whole page is
+   about: at one second of resolution you cannot watch a keystroke push it back,
+   which is the thing worth watching. */
+const WAIT_TICK_MS = 100
 
-const strip = document.getElementById('strip')
-const ruler = document.getElementById('ruler')
-const nowLine = document.getElementById('now')
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+
 const log = document.getElementById('log')
-const sendButton = document.getElementById('send')
+const composer = document.getElementById('composer')
+const input = document.getElementById('input')
 const takeoverButton = document.getElementById('takeover')
-const typingButton = document.getElementById('typing')
+const redeliverButton = document.getElementById('redeliver')
 const resetButton = document.getElementById('reset')
 const countMessages = document.getElementById('count-messages')
 const countTurns = document.getElementById('count-turns')
 const countSaved = document.getElementById('count-saved')
 
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+const strip = createStrip({
+  root: document.getElementById('strip'),
+  ruler: document.getElementById('ruler'),
+  nowLine: document.getElementById('now'),
+  reducedMotion,
+})
+
+const chat = createChat({
+  thread: document.getElementById('thread'),
+  typing: document.getElementById('typing'),
+  stateChip: document.getElementById('chat-state'),
+  reducedMotion,
+})
 
 let state = initialState('demo')
 let timer = null
-let sent = 0
+let deadlineAt = null
+/* Webhooks delivered, which is not the same as messages minted: a redelivery
+   is one more of the first and none of the second. */
+let received = 0
+let issued = 0
 let turns = 0
 let paused = false
+let last = null
+let typingLit = false
+let typingTimer = null
+let typingSentAt = 0
 
-/** Marks drawn on the strip: messages, drops and emitted turns. */
-let marks = []
-let deadlineAt = null
-let markId = 0
-
-function position(at, now) {
-  return ((at - (now - PAST_MS)) / SPAN_MS) * 100
-}
-
-function write(kind, text) {
+function write(kind, detail) {
   log.querySelector('.log__empty')?.remove()
   const line = document.createElement('li')
-  line.innerHTML = `<b>${kind}</b> ${text}`
-  if (kind === 'emitTurn') line.innerHTML = `<em>${kind}</em> ${text}`
+  const name = document.createElement(kind === 'emitTurn' ? 'em' : 'b')
+  name.textContent = kind
+  // The detail carries whatever the visitor typed, so it goes in as text.
+  line.append(name, ` ${detail}`)
   log.prepend(line)
   while (log.children.length > 40) log.lastElementChild.remove()
 }
@@ -82,13 +93,16 @@ function dispatch(event) {
   // Every event redraws. Without this the strip would only update inside the
   // animation frame loop, and readers who asked for reduced motion, where that
   // loop never starts, would never see a turn appear.
-  draw()
+  strip.draw()
+  tickWait()
+  return effects
 }
 
 function run(effect) {
   if (effect.type === 'schedule') {
     clearTimeout(timer)
     deadlineAt = effect.at
+    strip.setDeadline(effect.at)
     timer = setTimeout(
       () => dispatch({ type: 'tick', at: Date.now() }),
       Math.max(0, effect.at - Date.now()),
@@ -100,27 +114,25 @@ function run(effect) {
   if (effect.type === 'cancel') {
     clearTimeout(timer)
     deadlineAt = null
+    strip.setDeadline(null)
     write('cancel', 'pending turn dropped')
     return
   }
 
   if (effect.type === 'drop') {
-    marks.push({ id: (markId += 1), kind: 'dropped', at: Date.now() })
+    strip.mark('dropped', Date.now())
+    chat.drop(effect.messageId, effect.reason)
     write('drop', `${effect.messageId} (${effect.reason})`)
     return
   }
 
   if (effect.type === 'emitTurn') {
     deadlineAt = null
+    strip.setDeadline(null)
     turns += 1
     const text = effect.messages.map((message) => message.text).join(' ')
-    marks.push({
-      id: (markId += 1),
-      kind: 'turn',
-      at: Date.now(),
-      from: effect.messages[0].at,
-      text,
-    })
+    strip.mark('turn', Date.now(), { from: effect.messages[0].at, text })
+    chat.close({ text, count: effect.messages.length, isNewSession: effect.isNewSession })
     write('emitTurn', `${effect.messages.length} message(s): "${text}"`)
   }
 }
@@ -160,117 +172,94 @@ function setCounter(node, value, suffix = '') {
 }
 
 function render() {
-  setCounter(countMessages, sent)
+  setCounter(countMessages, received)
   setCounter(countTurns, turns)
   // Buffered messages have not been avoided yet, they are still waiting. Only
   // messages the reducer has resolved into a turn or a drop count here, so the
   // figure never claims a saving the run has not made.
-  const resolved = sent - state.buffer.length
+  const resolved = received - state.buffer.length
   setCounter(
     countSaved,
     resolved === 0 ? 0 : Math.round(((resolved - turns) / resolved) * 100),
     '%',
   )
-  strip.classList.toggle('strip--paused', paused)
+  strip.setPaused(paused)
+  chat.setPaused(paused)
   takeoverButton.setAttribute('aria-pressed', String(paused))
   takeoverButton.textContent = paused ? 'Human releases it' : 'Human takes over'
+  redeliverButton.disabled = last === null
 }
 
-/* Nodes are kept and moved rather than rebuilt. Recreating them every frame
-   would restart the turn block's animation sixty times a second. */
-const nodes = new Map()
-const deadlineNode = document.createElement('div')
-deadlineNode.className = 'strip__deadline'
-
-function nodeFor(mark) {
-  const existing = nodes.get(mark.id)
-  if (existing !== undefined) return existing
-
-  const node = document.createElement('div')
-  if (mark.kind === 'turn') {
-    node.className = 'strip__turn'
-    node.textContent = mark.text
-  } else {
-    node.className = mark.kind === 'dropped' ? 'strip__mark strip__mark--dropped' : 'strip__mark'
+function tickWait() {
+  if (deadlineAt === null || state.buffer.length === 0) {
+    chat.setWait(null)
+    if (typingLit) chat.setTyping('idle')
+    return
   }
-  strip.append(node)
-  nodes.set(mark.id, node)
-  return node
-}
 
-/* One frame loop keeps the marks, the deadline and the now line on the same
-   clock. Under reduced motion the strip still updates, once per event. */
-function draw() {
   const now = Date.now()
-  const cutoff = now - PAST_MS - 1_000
+  const remaining = Math.max(0, deadlineAt - now)
 
-  for (const mark of marks) {
-    if ((mark.from ?? mark.at) <= cutoff) {
-      nodes.get(mark.id)?.remove()
-      nodes.delete(mark.id)
-    }
-  }
-  marks = marks.filter((mark) => (mark.from ?? mark.at) > cutoff)
+  /* Which of the two rules is closing this turn is not something the page
+     works out for itself. It asks the library the hypothetical instead: if the
+     person were still typing at the very last moment, would the deadline move?
+     Where it would not, the cap is what they are waiting on and the label says
+     so. The hypothetical is put at the deadline rather than at now, because a
+     tick landing in the same millisecond as a keystroke would otherwise read
+     as a deadline that cannot move, which is the opposite of what happened. */
+  const held = deadline({ ...state, lastTypingAt: deadlineAt }, POLICY)
+  const label = held <= deadlineAt ? 'maxWaitMs cap' : 'waiting for silence'
 
-  for (const mark of marks) {
-    const node = nodeFor(mark)
-    if (mark.kind === 'turn') {
-      const left = position(mark.from, now)
-      node.style.left = `${left}%`
-      node.style.width = `${Math.max(position(mark.at, now) - left, 2)}%`
-    } else {
-      node.style.left = `${position(mark.at, now)}%`
-    }
-  }
+  // Not the closing rule, only the moment it last restarted from.
+  const from = Math.max(state.lastMessageAt, state.lastTypingAt ?? 0)
+  const span = Math.max(deadlineAt - from, 1)
 
-  if (deadlineAt === null) {
-    deadlineNode.remove()
-  } else {
-    if (!deadlineNode.isConnected) strip.append(deadlineNode)
-    deadlineNode.style.left = `${position(deadlineAt, now)}%`
-  }
-
-  nowLine.style.left = `${position(now, now)}%`
-  drawRuler(now)
+  chat.setWait(label, remaining, Math.min(Math.max(remaining / span, 0), 1))
+  if (typingLit) chat.setTyping('held')
 }
 
-let lastRulerSecond = null
+function ingest(id, text) {
+  received += 1
+  last = { id, text }
+  chat.add(id, text)
 
-function drawRuler(now) {
-  const second = Math.floor(now / 1_000)
-  if (second === lastRulerSecond) return
-  lastRulerSecond = second
-
-  const ticks = []
-  // Labels start one step in from each edge, where they would be clipped.
-  for (let offset = 3_000; offset < PAST_MS; offset += 3_000) {
-    ticks.push(
-      `<span class="strip__second" style="left:${position(now - offset, now)}%">-${offset / 1000}s</span>`,
-    )
-  }
-  ruler.innerHTML = ticks.join('')
+  const at = Date.now()
+  const effects = dispatch({ type: 'message', id, text, at })
+  // A dropped message draws its own mark from run(). Drawing one here as well
+  // would show the strip accepting work it refused.
+  if (!effects.some((effect) => effect.type === 'drop')) strip.mark('message', at)
+  strip.draw()
 }
 
-function loop() {
-  draw()
-  requestAnimationFrame(loop)
-}
-
-sendButton.addEventListener('click', () => {
-  sent += 1
-  dispatch({
-    type: 'message',
-    id: `m${sent}`,
-    text: FRAGMENTS[(sent - 1) % FRAGMENTS.length],
-    at: Date.now(),
-  })
-  if (!paused) marks.push({ id: (markId += 1), kind: 'message', at: Date.now() })
-  draw()
+composer.addEventListener('submit', (event) => {
+  event.preventDefault()
+  const text = input.value.trim()
+  if (text === '') return
+  input.value = ''
+  issued += 1
+  ingest(`m${issued}`, text)
 })
 
-typingButton.addEventListener('click', () => {
-  dispatch({ type: 'typing', at: Date.now() })
-  draw()
+input.addEventListener('input', () => {
+  const now = Date.now()
+  typingLit = true
+  chat.setTyping(state.buffer.length === 0 ? 'idle' : 'held')
+  clearTimeout(typingTimer)
+  typingTimer = setTimeout(() => {
+    typingLit = false
+    chat.setTyping(null)
+  }, TYPING_LIT_MS)
+
+  if (now - typingSentAt < TYPING_EVERY_MS) return
+  typingSentAt = now
+  dispatch({ type: 'typing', at: now })
+})
+
+/* The same id arriving twice, which is what a gateway retry looks like from
+   here: one more webhook received and no new message. */
+redeliverButton.addEventListener('click', () => {
+  if (last === null) return
+  ingest(last.id, last.text)
 })
 
 takeoverButton.addEventListener('click', () => {
@@ -286,26 +275,31 @@ takeoverButton.addEventListener('click', () => {
       }
     }, POLICY.takeoverTtlMs)
   }
-  draw()
+  strip.draw()
 })
 
 resetButton.addEventListener('click', () => {
   clearTimeout(timer)
+  clearTimeout(typingTimer)
   state = initialState('demo')
-  for (const node of nodes.values()) node.remove()
-  nodes.clear()
-  deadlineNode.remove()
-  marks = []
+  strip.clear()
+  chat.clear()
+  chat.setTyping(null)
   deadlineAt = null
-  sent = 0
+  received = 0
+  issued = 0
   turns = 0
   paused = false
+  last = null
+  typingLit = false
+  typingSentAt = 0
   log.innerHTML =
     '<li class="log__empty">Nothing has run yet. Send a message and the effects the reducer returns appear here.</li>'
   render()
-  draw()
+  strip.draw()
 })
 
+chat.setTyping(null)
 render()
-draw()
-if (!reducedMotion.matches) loop()
+strip.draw()
+setInterval(tickWait, WAIT_TICK_MS)
