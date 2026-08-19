@@ -1,6 +1,6 @@
 {
   "name": "@luantaraschi/lull",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Conversation runtime for chat agents: message coalescing, webhook idempotency, human takeover and session expiry.",
   "type": "module",
   "license": "MIT",
