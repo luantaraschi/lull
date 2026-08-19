@@ -9,12 +9,16 @@ export function initialState(id: string): ConversationState {
     lastMessageAt: 0,
     session: null,
     pausedUntil: null,
+    lastTypingAt: null,
   }
 }
 
 /** When the buffered turn is due: quiet silence, capped by maxWaitMs. */
 export function deadline(state: ConversationState, policy: Policy): number {
-  const quiet = state.lastMessageAt + policy.quietMs
+  // Typing counts as activity, so a person still composing holds their turn
+  // open. The cap below is what stops that from lasting forever.
+  const lastActivity = Math.max(state.lastMessageAt, state.lastTypingAt ?? 0)
+  const quiet = lastActivity + policy.quietMs
   const cap = (state.firstBufferedAt ?? state.lastMessageAt) + policy.maxWaitMs
   return Math.min(quiet, cap)
 }
@@ -27,6 +31,8 @@ export function reduce(
   switch (event.type) {
     case 'message':
       return onMessage(state, event, policy)
+    case 'typing':
+      return onTyping(state, event, policy)
     case 'tick':
       return onTick(state, event, policy)
     case 'takeover':
@@ -156,4 +162,23 @@ function onTakeover(
   }
 
   return [next, [{ type: 'cancel', conversationId: state.id }, ...drops]]
+}
+
+function onTyping(
+  state: ConversationState,
+  event: Extract<Event, { type: 'typing' }>,
+  policy: Policy,
+): [ConversationState, Effect[]] {
+  // A human is answering; what the customer is doing does not change that.
+  if (pauseAt(state, event.at) !== null) return [state, []]
+
+  const next: ConversationState = {
+    ...state,
+    lastTypingAt: event.at,
+    session: state.session === null ? null : { ...state.session, lastActivityAt: event.at },
+  }
+
+  if (next.buffer.length === 0) return [next, []]
+
+  return [next, [{ type: 'schedule', conversationId: next.id, at: deadline(next, policy) }]]
 }

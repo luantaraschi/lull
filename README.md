@@ -95,6 +95,15 @@ The runtime also emits `drop` (with a reason of `duplicate` or `paused`) and
 `error`, so you can measure what the bot chose not to answer. Every export,
 option and event is listed in the [API reference](docs/api.md).
 
+`quietMs` is worth measuring rather than guessing. In a simulation of a thousand
+conversations, the default has the bot answering before the person finished in
+47% of bursts; at 6000 that falls to 14%. See
+[choosing quietMs](docs/tuning.md), or run `npm run bench:sweep`. If your channel
+reports when somebody is composing, pass it along with
+`runtime.typing({ conversationId })`: it holds an open turn open while they
+type, which beats guessing at a number. Conversations that need different
+patience get it through `policyFor`.
+
 ## Design
 
 The core is a pure function:
@@ -227,6 +236,7 @@ implementation on purpose to watch it fail.
 ## More
 
 - [API reference](docs/api.md), every export with its options and events
+- [Choosing quietMs](docs/tuning.md), with the measurements behind the default
 - [Why the core is a pure reducer](docs/writing/why-the-core-is-a-pure-reducer.md)
 - [Changelog](CHANGELOG.md)
 - [Design spec and implementation plan](docs/superpowers) (in Portuguese)

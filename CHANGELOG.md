@@ -6,6 +6,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-19
+
+### Added
+
+- A `typing` event. Feed it the presence your channel already emits, with
+  `runtime.typing({ conversationId })` or a `{ type: 'typing', at }` event on
+  the core, and an open turn stays open while the person composes. It never
+  opens a turn, and `maxWaitMs` still caps it, so somebody who types without
+  ever sending still gets an answer.
+- `policyFor`, a per-conversation policy override on `createRuntime`. It runs
+  before the conversation is locked, so it may read a database.
+- `npm run bench:sweep`, measuring what `quietMs` costs, and
+  [Choosing quietMs](docs/tuning.md) with the resulting table. At the 2500ms
+  default the bot answers before the person has finished in 47% of bursts; at
+  6000ms that falls to 14%.
+
+### Changed
+
+- `deadline()` now reads `max(lastMessageAt, lastTypingAt)`. State written by
+  earlier versions has no `lastTypingAt` and keeps working unchanged.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added
@@ -59,6 +80,7 @@ First release.
   for the next message.
 - `memoryStore()` keeps state in process memory; it is lost on restart.
 
-[Unreleased]: https://github.com/luantaraschi/lull/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/luantaraschi/lull/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/luantaraschi/lull/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/luantaraschi/lull/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/luantaraschi/lull/releases/tag/v0.1.0

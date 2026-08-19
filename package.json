@@ -17,7 +17,8 @@
     "build:site": "tsup src/core/index.ts --format esm --out-dir site/vendor --no-clean --no-dts --minify --target es2022",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check:package": "publint && attw --pack --profile node16"
+    "check:package": "publint && attw --pack --profile node16",
+    "bench:sweep": "tsx bench/quiet-sweep.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

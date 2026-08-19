@@ -115,3 +115,74 @@ describe('createRuntime', () => {
     expect(turns).toEqual([])
   })
 })
+
+describe('typing', () => {
+  test('holds the turn open while the person is still composing', async () => {
+    const { runtime, turns } = setup()
+
+    await runtime.ingest({ conversationId: 'c1', messageId: 'm1', text: 'hi' })
+    await vi.advanceTimersByTimeAsync(2_000)
+    await runtime.typing({ conversationId: 'c1' })
+    await vi.advanceTimersByTimeAsync(2_000)
+
+    expect(turns).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(600)
+
+    expect(turns).toHaveLength(1)
+
+    await runtime.stop()
+  })
+})
+
+describe('policyFor', () => {
+  test('takes the quiet window from the conversation, not the runtime', async () => {
+    const turns: Turn[] = []
+    const runtime = createRuntime({
+      store: memoryStore(),
+      quietMs: 2_500,
+      policyFor: (conversationId) => (conversationId === 'patient' ? { quietMs: 6_000 } : {}),
+    })
+    runtime.on('turn', (turn) => {
+      turns.push(turn)
+    })
+
+    await runtime.ingest({ conversationId: 'patient', messageId: 'm1', text: 'hi' })
+    await runtime.ingest({ conversationId: 'brisk', messageId: 'm2', text: 'hi' })
+    await vi.advanceTimersByTimeAsync(2_500)
+
+    expect(turns.map((turn) => turn.conversationId)).toEqual(['brisk'])
+
+    await vi.advanceTimersByTimeAsync(3_500)
+
+    expect(turns.map((turn) => turn.conversationId)).toEqual(['brisk', 'patient'])
+
+    await runtime.stop()
+  })
+
+  test('accepts a policy that has to be looked up', async () => {
+    const turns: Turn[] = []
+    const runtime = createRuntime({
+      store: memoryStore(),
+      quietMs: 2_500,
+      policyFor: async () => {
+        await Promise.resolve()
+        return { quietMs: 5_000 }
+      },
+    })
+    runtime.on('turn', (turn) => {
+      turns.push(turn)
+    })
+
+    await runtime.ingest({ conversationId: 'c1', messageId: 'm1', text: 'hi' })
+    await vi.advanceTimersByTimeAsync(2_500)
+
+    expect(turns).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(2_500)
+
+    expect(turns).toHaveLength(1)
+
+    await runtime.stop()
+  })
+})

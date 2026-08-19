@@ -19,6 +19,12 @@ export type RuntimeOptions = Partial<Policy> & {
   store: Store
   /** Injectable clock. Defaults to Date.now. */
   now?: () => number
+  /**
+   * Per-conversation overrides, merged over the runtime's own policy. Called
+   * once per event, before the conversation is locked, so it may read a
+   * database. A conversation that needs no override returns nothing.
+   */
+  policyFor?: (conversationId: string) => Partial<Policy> | Promise<Partial<Policy>>
 }
 
 export type Runtime = {
@@ -33,6 +39,7 @@ export type Runtime = {
   }): Promise<void>
   takeover(input: { conversationId: string; at?: number }): Promise<void>
   release(input: { conversationId: string; at?: number }): Promise<void>
+  typing(input: { conversationId: string; at?: number }): Promise<void>
   stop(): Promise<void>
 }
 
@@ -45,8 +52,8 @@ export const DEFAULT_POLICY: Policy = {
 }
 
 export function createRuntime(options: RuntimeOptions): Runtime {
-  const { store, now = () => Date.now(), ...overrides } = options
-  const policy: Policy = { ...DEFAULT_POLICY, ...overrides }
+  const { store, now = () => Date.now(), policyFor, ...overrides } = options
+  const basePolicy: Policy = { ...DEFAULT_POLICY, ...overrides }
 
   const timers = new Map<string, ReturnType<typeof setTimeout>>()
   const turnHandlers: ((turn: Turn) => void | Promise<void>)[] = []
@@ -67,6 +74,11 @@ export function createRuntime(options: RuntimeOptions): Runtime {
   }
 
   async function dispatch(conversationId: string, event: Event): Promise<void> {
+    // Resolved before the lock: looking a policy up may hit a database, and a
+    // critical section is the wrong place to wait on one.
+    const policy: Policy =
+      policyFor === undefined ? basePolicy : { ...basePolicy, ...(await policyFor(conversationId)) }
+
     const effects = await store.withLock(conversationId, async () => {
       const state = (await store.load(conversationId)) ?? initialState(conversationId)
       const [next, produced] = reduce(state, event, policy)
@@ -152,6 +164,10 @@ export function createRuntime(options: RuntimeOptions): Runtime {
 
     async release({ conversationId, at }) {
       await dispatch(conversationId, { type: 'release', at: at ?? now() })
+    },
+
+    async typing({ conversationId, at }) {
+      await dispatch(conversationId, { type: 'typing', at: at ?? now() })
     },
 
     async stop() {

@@ -27,15 +27,20 @@ const runtime = createRuntime({
 })
 ```
 
-| Option          | Type           | Default    | Meaning                                               |
-| --------------- | -------------- | ---------- | ----------------------------------------------------- |
-| `store`         | `Store`        | required   | Where conversation state lives between events         |
-| `quietMs`       | `number`       | `2500`     | Silence that closes a turn                            |
-| `maxWaitMs`     | `number`       | `15000`    | Hard cap measured from the first buffered message     |
-| `sessionTtlMs`  | `number`       | `1800000`  | Inactivity after which the next turn starts a session |
-| `takeoverTtlMs` | `number`       | `900000`   | How long a human takeover keeps the bot quiet         |
-| `dedupeWindow`  | `number`       | `200`      | Recent message ids remembered per conversation        |
-| `now`           | `() => number` | `Date.now` | Clock, injectable for tests                           |
+| Option          | Type                      | Default    | Meaning                                               |
+| --------------- | ------------------------- | ---------- | ----------------------------------------------------- |
+| `store`         | `Store`                   | required   | Where conversation state lives between events         |
+| `quietMs`       | `number`                  | `2500`     | Silence that closes a turn                            |
+| `maxWaitMs`     | `number`                  | `15000`    | Hard cap measured from the first buffered message     |
+| `sessionTtlMs`  | `number`                  | `1800000`  | Inactivity after which the next turn starts a session |
+| `takeoverTtlMs` | `number`                  | `900000`   | How long a human takeover keeps the bot quiet         |
+| `dedupeWindow`  | `number`                  | `200`      | Recent message ids remembered per conversation        |
+| `now`           | `() => number`            | `Date.now` | Clock, injectable for tests                           |
+| `policyFor`     | `(id) => Partial<Policy>` | none       | Per-conversation overrides, sync or async             |
+
+`quietMs` decides how often the bot cuts somebody off, and the default is a
+starting point rather than a recommendation. [Choosing quietMs](tuning.md) has
+the measurements.
 
 ### `runtime.ingest({ conversationId, messageId, text, at? })`
 
@@ -55,6 +60,14 @@ whatever was buffered.
 ### `runtime.release({ conversationId, at? })`
 
 Ends a takeover immediately. Safe to call when no takeover is active.
+
+### `runtime.typing({ conversationId, at? })`
+
+Tells the runtime the person is composing, from whatever presence event your
+channel emits. It holds an open turn open and never opens one: with nothing
+buffered there is nothing to wait for. `maxWaitMs` still applies, so somebody
+who types without ever sending still gets an answer, and a takeover ignores it
+entirely.
 
 ### `runtime.stop()`
 
@@ -115,6 +128,7 @@ Returns the next state and the effects to run. Same input, same output, always.
 
 ```ts
 { type: 'message', id: string, text: string, at: number }
+{ type: 'typing', at: number }
 { type: 'takeover', at: number }
 { type: 'release', at: number }
 { type: 'tick', at: number }
@@ -151,7 +165,7 @@ returns `null`.
 ### `deadline(state, policy)`
 
 When the buffered turn is due, in epoch milliseconds:
-`min(lastMessageAt + quietMs, firstBufferedAt + maxWaitMs)`. Exported because a
+`min(max(lastMessageAt, lastTypingAt) + quietMs, firstBufferedAt + maxWaitMs)`. Exported because a
 scheduler outside the facade needs the same number the reducer will use.
 
 ### `ConversationState`
@@ -165,8 +179,12 @@ type ConversationState = {
   lastMessageAt: number
   session: { id: string; lastActivityAt: number; turns: number } | null
   pausedUntil: number | null
+  lastTypingAt?: number | null
 }
 ```
+
+`lastTypingAt` is optional because state written by versions before 0.3.0 does
+not carry it, and every read tolerates its absence.
 
 Plain data, JSON serialisable on purpose: it goes into Redis or a Postgres
 column without translation. Session ids are derived as

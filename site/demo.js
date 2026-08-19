@@ -42,6 +42,7 @@ const nowLine = document.getElementById('now')
 const log = document.getElementById('log')
 const sendButton = document.getElementById('send')
 const takeoverButton = document.getElementById('takeover')
+const typingButton = document.getElementById('typing')
 const resetButton = document.getElementById('reset')
 const countMessages = document.getElementById('count-messages')
 const countTurns = document.getElementById('count-turns')
@@ -264,6 +265,11 @@ sendButton.addEventListener('click', () => {
     at: Date.now(),
   })
   if (!paused) marks.push({ id: (markId += 1), kind: 'message', at: Date.now() })
+  draw()
+})
+
+typingButton.addEventListener('click', () => {
+  dispatch({ type: 'typing', at: Date.now() })
   draw()
 })
 

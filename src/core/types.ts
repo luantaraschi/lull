@@ -16,6 +16,11 @@ export type ConversationState = {
   session: { id: string; lastActivityAt: number; turns: number } | null
   /** Epoch millis until which the bot stays quiet after a human takeover. */
   pausedUntil: number | null
+  /**
+   * When the channel last reported the person as typing. Absent on state
+   * persisted by versions before 0.3.0, so every read tolerates undefined.
+   */
+  lastTypingAt?: number | null
 }
 
 export type Policy = {
@@ -35,6 +40,11 @@ export type DropReason = 'duplicate' | 'paused'
 
 export type Event =
   | { type: 'message'; id: string; text: string; at: number }
+  /**
+   * The channel says the person is composing. It holds an open turn open, and
+   * it never opens one: with nothing buffered there is nothing to wait for.
+   */
+  | { type: 'typing'; at: number }
   | { type: 'takeover'; at: number }
   | { type: 'release'; at: number }
   | { type: 'tick'; at: number }

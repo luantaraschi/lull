@@ -13,7 +13,7 @@ const policy: Policy = {
 
 /** Arbitrary event kinds, each with a positive time gap from the previous one. */
 const step = fc.record({
-  kind: fc.constantFrom('message', 'takeover', 'release', 'tick'),
+  kind: fc.constantFrom('message', 'takeover', 'release', 'tick', 'typing'),
   gap: fc.integer({ min: 1, max: 40_000 }),
 })
 
@@ -31,6 +31,8 @@ function timeline(steps: { kind: string; gap: number }[]): Event[] {
         return { type: 'takeover', at } as Event
       case 'release':
         return { type: 'release', at } as Event
+      case 'typing':
+        return { type: 'typing', at } as Event
       default:
         return { type: 'tick', at } as Event
     }
