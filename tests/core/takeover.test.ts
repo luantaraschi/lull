@@ -51,7 +51,10 @@ describe('takeover', () => {
   })
 
   test('release brings the bot back immediately', () => {
-    const state = fold([{ type: 'takeover', at: 2_000 }, { type: 'release', at: 4_000 }])
+    const state = fold([
+      { type: 'takeover', at: 2_000 },
+      { type: 'release', at: 4_000 },
+    ])
     const [next, effects] = reduce(
       state,
       { type: 'message', id: 'm1', text: 'hello?', at: 5_000 },

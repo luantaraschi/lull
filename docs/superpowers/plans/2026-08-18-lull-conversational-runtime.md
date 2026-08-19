@@ -28,11 +28,13 @@
 ### Task 1: Scaffold, tipos e bufferização
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore`
 - Create: `src/core/types.ts`, `src/core/reduce.ts`
 - Test: `tests/core/message.test.ts`
 
 **Interfaces:**
+
 - Consumes: nada.
 - Produces: `ConversationState`, `BufferedMessage`, `Policy`, `Event`, `Effect` (`src/core/types.ts`); `initialState(id: string): ConversationState`, `deadline(state: ConversationState, policy: Policy): number`, `reduce(state: ConversationState, event: Event, policy: Policy): [ConversationState, Effect[]]` (`src/core/reduce.ts`).
 
@@ -308,10 +310,12 @@ git commit -m "feat(core): buffer messages and schedule the quiet deadline"
 ### Task 2: Fechamento do turno
 
 **Files:**
+
 - Modify: `src/core/reduce.ts`
 - Test: `tests/core/turn.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState`, `deadline` (Task 1).
 - Produces: tratamento do evento `{ type: 'tick', at }`, emite `emitTurn` quando vencido, reagenda quando cedo demais, nada quando o buffer está vazio.
 
@@ -411,14 +415,14 @@ Expected: FAIL, os ticks devolvem `[]` (o `default` do switch), então "reschedu
 Em `src/core/reduce.ts`, trocar o `switch` por:
 
 ```ts
-  switch (event.type) {
-    case 'message':
-      return onMessage(state, event, policy)
-    case 'tick':
-      return onTick(state, event, policy)
-    default:
-      return [state, []]
-  }
+switch (event.type) {
+  case 'message':
+    return onMessage(state, event, policy)
+  case 'tick':
+    return onTick(state, event, policy)
+  default:
+    return [state, []]
+}
 ```
 
 E acrescentar ao fim do arquivo:
@@ -479,10 +483,12 @@ git commit -m "feat(core): close the turn on tick, capped by maxWaitMs"
 ### Task 3: Idempotência por janela
 
 **Files:**
+
 - Modify: `src/core/reduce.ts`
 - Test: `tests/core/dedupe.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState` (Task 1).
 - Produces: campo `seen` alimentado e limitado a `policy.dedupeWindow`; efeito `drop` com `reason: 'duplicate'`.
 
@@ -599,10 +605,12 @@ git commit -m "feat(core): drop redelivered messages with a bounded id window"
 ### Task 4: Takeover humano
 
 **Files:**
+
 - Modify: `src/core/reduce.ts`
 - Test: `tests/core/takeover.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState` (Task 1).
 - Produces: tratamento de `takeover` e `release`; campo `pausedUntil`; efeitos `cancel` e `drop` com `reason: 'paused'`; expiração preguiçosa da pausa.
 
@@ -664,7 +672,10 @@ describe('takeover', () => {
   })
 
   test('release brings the bot back immediately', () => {
-    const state = fold([{ type: 'takeover', at: 2_000 }, { type: 'release', at: 4_000 }])
+    const state = fold([
+      { type: 'takeover', at: 2_000 },
+      { type: 'release', at: 4_000 },
+    ])
     const [next, effects] = reduce(
       state,
       { type: 'message', id: 'm1', text: 'hello?', at: 5_000 },
@@ -711,16 +722,16 @@ Expected: FAIL, `takeover` e `release` caem no `default` e não fazem nada.
 Em `src/core/reduce.ts`, o `switch` completo passa a ser:
 
 ```ts
-  switch (event.type) {
-    case 'message':
-      return onMessage(state, event, policy)
-    case 'tick':
-      return onTick(state, event, policy)
-    case 'takeover':
-      return onTakeover(state, event, policy)
-    case 'release':
-      return [{ ...state, pausedUntil: null }, []]
-  }
+switch (event.type) {
+  case 'message':
+    return onMessage(state, event, policy)
+  case 'tick':
+    return onTick(state, event, policy)
+  case 'takeover':
+    return onTakeover(state, event, policy)
+  case 'release':
+    return [{ ...state, pausedUntil: null }, []]
+}
 ```
 
 Acrescentar o helper e o handler:
@@ -758,44 +769,43 @@ function onTakeover(
 Em `onMessage`, logo depois do bloco de dedupe, acrescentar:
 
 ```ts
-  const pausedUntil = pauseAt(state, event.at)
-  const seen = [...state.seen, event.id].slice(-policy.dedupeWindow)
+const pausedUntil = pauseAt(state, event.at)
+const seen = [...state.seen, event.id].slice(-policy.dedupeWindow)
 
-  if (pausedUntil !== null) {
-    // A human is handling this conversation. Keep the session warm, stay quiet.
-    const paused: ConversationState = {
-      ...state,
-      seen,
-      pausedUntil,
-      lastMessageAt: event.at,
-      session:
-        state.session === null ? null : { ...state.session, lastActivityAt: event.at },
-    }
-    return [
-      paused,
-      [{ type: 'drop', conversationId: state.id, messageId: event.id, reason: 'paused' }],
-    ]
+if (pausedUntil !== null) {
+  // A human is handling this conversation. Keep the session warm, stay quiet.
+  const paused: ConversationState = {
+    ...state,
+    seen,
+    pausedUntil,
+    lastMessageAt: event.at,
+    session: state.session === null ? null : { ...state.session, lastActivityAt: event.at },
   }
+  return [
+    paused,
+    [{ type: 'drop', conversationId: state.id, messageId: event.id, reason: 'paused' }],
+  ]
+}
 ```
 
 Remover a linha `const seen = ...` que ficou duplicada abaixo e acrescentar `pausedUntil` ao objeto `next` de `onMessage`:
 
 ```ts
-  const next: ConversationState = {
-    ...state,
-    seen,
-    pausedUntil,
-    session: { ...session, lastActivityAt: event.at },
-    buffer: [...state.buffer, { id: event.id, text: event.text, at: event.at }],
-    firstBufferedAt: state.firstBufferedAt ?? event.at,
-    lastMessageAt: event.at,
-  }
+const next: ConversationState = {
+  ...state,
+  seen,
+  pausedUntil,
+  session: { ...session, lastActivityAt: event.at },
+  buffer: [...state.buffer, { id: event.id, text: event.text, at: event.at }],
+  firstBufferedAt: state.firstBufferedAt ?? event.at,
+  lastMessageAt: event.at,
+}
 ```
 
 Em `onTick`, como primeira linha do corpo:
 
 ```ts
-  if (pauseAt(state, event.at) !== null) return [state, []]
+if (pauseAt(state, event.at) !== null) return [state, []]
 ```
 
 - [ ] **Step 4: Rodar os testes e confirmar que passam**
@@ -815,10 +825,12 @@ git commit -m "feat(core): pause the bot while a human handles the conversation"
 ### Task 5: Expiração de sessão
 
 **Files:**
+
 - Modify: `src/core/reduce.ts`
 - Test: `tests/core/session.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState` (Task 1).
 - Produces: sessão que expira por inatividade, a mensagem seguinte abre sessão nova, com `turns` zerado, e o turno resultante sai com `isNewSession: true`.
 
@@ -901,7 +913,7 @@ function sessionFor(
 E em `onMessage` trocar a criação da sessão por:
 
 ```ts
-  const session = sessionFor(state, event.at, policy)
+const session = sessionFor(state, event.at, policy)
 ```
 
 - [ ] **Step 4: Rodar os testes e confirmar que passam**
@@ -921,10 +933,12 @@ git commit -m "feat(core): expire idle sessions and flag the first turn of a new
 ### Task 6: Invariantes com fast-check
 
 **Files:**
+
 - Modify: `package.json` (devDependency `fast-check`)
 - Test: `tests/core/properties.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState` (Tasks 1-5).
 - Produces: nenhuma API nova. Três invariantes sobre sequências arbitrárias de eventos.
 
@@ -1059,10 +1073,12 @@ git commit -m "test(core): pin invariants with property-based tests"
 ### Task 7: Store e o lock por conversa
 
 **Files:**
+
 - Create: `src/store/types.ts`, `src/store/memory.ts`
 - Test: `tests/store/memory.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ConversationState` (Task 1).
 - Produces: `Store` (`src/store/types.ts`) com `load`, `save`, `delete`, `withLock`; `memoryStore(): Store` (`src/store/memory.ts`).
 
@@ -1227,10 +1243,12 @@ git commit -m "feat(store): add the Store contract and an in-memory implementati
 ### Task 8: A fachada `createRuntime`
 
 **Files:**
+
 - Create: `src/runtime/runtime.ts`, `src/index.ts`, `src/core/index.ts`
 - Test: `tests/runtime/runtime.test.ts`
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState`, tipos do núcleo (Tasks 1-5); `Store`, `memoryStore` (Task 7).
 - Produces: `createRuntime(options: RuntimeOptions): Runtime` com `on`, `ingest`, `takeover`, `release`, `stop`; tipos `Turn`, `Drop`, `RuntimeOptions`, `Runtime`. Reexports públicos em `src/index.ts` e `src/core/index.ts`.
 
@@ -1575,10 +1593,12 @@ git commit -m "feat(runtime): add the facade that executes effects and owns time
 ### Task 9: Build e CI
 
 **Files:**
+
 - Create: `tsup.config.ts`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`
 - Modify: `package.json`
 
 **Interfaces:**
+
 - Consumes: `src/index.ts`, `src/core/index.ts` (Task 8).
 - Produces: `dist/` com ESM, CJS e tipos; entradas `.` e `./core` no exports map; CI verde em Node 20 e 22.
 
@@ -1626,15 +1646,7 @@ Acrescentar/substituir estes campos (o resto permanece como na Task 1):
   "files": ["dist", "README.md", "LICENSE"],
   "sideEffects": false,
   "engines": { "node": ">=20" },
-  "keywords": [
-    "chatbot",
-    "whatsapp",
-    "agent",
-    "llm",
-    "debounce",
-    "idempotency",
-    "conversation"
-  ],
+  "keywords": ["chatbot", "whatsapp", "agent", "llm", "debounce", "idempotency", "conversation"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/luantaraschi/lull.git"
@@ -1728,10 +1740,12 @@ git commit -m "build: ship dual ESM/CJS output and wire CI"
 ### Task 10: Exemplo executável
 
 **Files:**
+
 - Create: `examples/webhook.ts`
 - Modify: `package.json` (script `example`, devDependency `tsx`)
 
 **Interfaces:**
+
 - Consumes: `createRuntime`, `memoryStore` (Task 8).
 - Produces: `npm run example`, sobe um servidor local, dispara um webhook fragmentado com duplicata e takeover, imprime os turnos. Sem credencial nenhuma.
 
@@ -1763,7 +1777,9 @@ runtime.on('turn', (turn) => {
   const text = turn.messages.map((m) => m.text).join(' ')
   console.log(`\n[turn] ${turn.conversationId} (new session: ${turn.isNewSession})`)
   console.log(`       "${text}"`)
-  console.log(`       -> this is where you would call your LLM, once, with ${turn.messages.length} message(s)`)
+  console.log(
+    `       -> this is where you would call your LLM, once, with ${turn.messages.length} message(s)`,
+  )
 })
 
 runtime.on('drop', (drop) => {
@@ -1869,10 +1885,12 @@ git commit -m "docs: add a runnable webhook example with no credentials"
 ### Task 11: Benchmark
 
 **Files:**
+
 - Create: `bench/coalescing.ts`
 - Modify: `package.json` (script `bench`)
 
 **Interfaces:**
+
 - Consumes: `reduce`, `initialState` (Tasks 1-5).
 - Produces: `npm run bench`, número reproduzível de redução de chamadas ao LLM. Roda sobre o núcleo puro, sem timers, portanto é determinístico.
 
@@ -1983,10 +2001,12 @@ git commit -m "bench: measure how many LLM calls coalescing avoids"
 ### Task 12: README, licença e publicação
 
 **Files:**
+
 - Create: `README.md`, `LICENSE`
 - Modify: `package.json` (`version`)
 
 **Interfaces:**
+
 - Consumes: tudo. É a embalagem.
 - Produces: pacote publicado em `@luantaraschi/lull` e uma tag `v0.1.0`.
 
@@ -2021,7 +2041,7 @@ import { createRuntime, memoryStore } from '@luantaraschi/lull'
 const runtime = createRuntime({ store: memoryStore() })
 
 runtime.on('turn', async ({ conversationId, messages, isNewSession }) => {
-  const reply = await myAgent(messages)      // your LLM, your choice
+  const reply = await myAgent(messages) // your LLM, your choice
   await whatsapp.send(conversationId, reply)
 })
 
@@ -2067,13 +2087,13 @@ npm i @luantaraschi/lull
 
 ## Configuration
 
-| Option           | Default   | What it does                                          |
-| ---------------- | --------- | ----------------------------------------------------- |
-| `quietMs`        | `2500`    | Silence that closes a turn                             |
-| `maxWaitMs`      | `15000`   | Hard cap from the first buffered message               |
-| `sessionTtlMs`   | `1800000` | Inactivity after which the next turn starts a session  |
-| `takeoverTtlMs`  | `900000`  | How long a human takeover keeps the bot quiet          |
-| `dedupeWindow`   | `200`     | Recent message ids remembered per conversation         |
+| Option          | Default   | What it does                                          |
+| --------------- | --------- | ----------------------------------------------------- |
+| `quietMs`       | `2500`    | Silence that closes a turn                            |
+| `maxWaitMs`     | `15000`   | Hard cap from the first buffered message              |
+| `sessionTtlMs`  | `1800000` | Inactivity after which the next turn starts a session |
+| `takeoverTtlMs` | `900000`  | How long a human takeover keeps the bot quiet         |
+| `dedupeWindow`  | `200`     | Recent message ids remembered per conversation        |
 
 ## Design
 
@@ -2198,5 +2218,5 @@ npm publish --access public
 O que fazer com o repositório pronto, já que o objetivo é currículo:
 
 1. **Descrição e topics no GitHub**: `chatbot`, `llm`, `whatsapp`, `typescript`, `agents`. É por aí que alguém tropeça no projeto.
-2. **A linha do currículo**, com o número do bench no lugar de adjetivo: *"@luantaraschi/lull, biblioteca TypeScript de runtime conversacional para agentes de atendimento (coalescing de mensagens, idempotência de webhook, takeover humano). Núcleo puro testado por propriedades; NN% menos chamadas ao LLM em conversas fragmentadas."*
+2. **A linha do currículo**, com o número do bench no lugar de adjetivo: _"@luantaraschi/lull, biblioteca TypeScript de runtime conversacional para agentes de atendimento (coalescing de mensagens, idempotência de webhook, takeover humano). Núcleo puro testado por propriedades; NN% menos chamadas ao LLM em conversas fragmentadas."_
 3. **Um post técnico** sobre a decisão do reducer puro com efeitos declarativos e o porquê de `withLock`, é o conteúdo que circula, e é exatamente o assunto que você quer que apareça na entrevista.

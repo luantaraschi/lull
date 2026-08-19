@@ -26,8 +26,8 @@ does not tell you what happens when the second message lands one millisecond
 before the flush, or when a takeover arrives while messages sit in the buffer.
 
 The trouble is not the test framework. It is that the logic and the clock are
-the same object. As long as the code that decides *when to answer* is the code
-that *reads the clock and creates timers*, every test has to simulate an
+the same object. As long as the code that decides _when to answer_ is the code
+that _reads the clock and creates timers_, every test has to simulate an
 environment before it can ask a question.
 
 So I split them.

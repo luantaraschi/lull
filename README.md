@@ -32,7 +32,7 @@ import { createRuntime, memoryStore } from '@luantaraschi/lull'
 const runtime = createRuntime({ store: memoryStore() })
 
 runtime.on('turn', async ({ conversationId, messages, isNewSession }) => {
-  const reply = await myAgent(messages)      // your LLM, your choice
+  const reply = await myAgent(messages) // your LLM, your choice
   await whatsapp.send(conversationId, reply)
 })
 
@@ -90,14 +90,15 @@ the rest already has good libraries.
 
 | Option          | Default   | What it does                                          |
 | --------------- | --------- | ----------------------------------------------------- |
-| `quietMs`       | `2500`    | Silence that closes a turn                             |
-| `maxWaitMs`     | `15000`   | Hard cap from the first buffered message               |
-| `sessionTtlMs`  | `1800000` | Inactivity after which the next turn starts a session  |
-| `takeoverTtlMs` | `900000`  | How long a human takeover keeps the bot quiet          |
-| `dedupeWindow`  | `200`     | Recent message ids remembered per conversation         |
+| `quietMs`       | `2500`    | Silence that closes a turn                            |
+| `maxWaitMs`     | `15000`   | Hard cap from the first buffered message              |
+| `sessionTtlMs`  | `1800000` | Inactivity after which the next turn starts a session |
+| `takeoverTtlMs` | `900000`  | How long a human takeover keeps the bot quiet         |
+| `dedupeWindow`  | `200`     | Recent message ids remembered per conversation        |
 
 The runtime also emits `drop` (with a reason of `duplicate` or `paused`) and
-`error`, so you can measure what the bot chose not to answer.
+`error`, so you can measure what the bot chose not to answer. Every export,
+option and event is listed in the [API reference](docs/api.md).
 
 ## Design
 
@@ -230,6 +231,7 @@ implementation on purpose to watch it fail.
 
 ## More
 
+- [API reference](docs/api.md), every export with its options and events
 - [Why the core is a pure reducer](docs/writing/why-the-core-is-a-pure-reducer.md)
 - [Changelog](CHANGELOG.md)
 - [Design spec and implementation plan](docs/superpowers) (in Portuguese)

@@ -58,12 +58,12 @@ então silêncio" é aritmética, não `setTimeout`.
 ```ts
 type ConversationState = {
   id: string
-  seen: string[]              // janela de messageIds recentes (dedupe)
-  buffer: BufferedMessage[]   // mensagens aguardando o silêncio
+  seen: string[] // janela de messageIds recentes (dedupe)
+  buffer: BufferedMessage[] // mensagens aguardando o silêncio
   firstBufferedAt: number | null
   lastMessageAt: number
   session: { id: string; lastActivityAt: number } | null
-  pausedUntil: number | null  // takeover humano
+  pausedUntil: number | null // takeover humano
 }
 ```
 
@@ -139,13 +139,17 @@ const runtime = createRuntime({
   dedupeWindow: 200,
 })
 
-runtime.on('turn', async ({ conversationId, messages, isNewSession }) => { /* ... */ })
-runtime.on('drop', ({ conversationId, reason }) => { /* ... */ })
+runtime.on('turn', async ({ conversationId, messages, isNewSession }) => {
+  /* ... */
+})
+runtime.on('drop', ({ conversationId, reason }) => {
+  /* ... */
+})
 
 await runtime.ingest({ conversationId, messageId, text, at })
 await runtime.takeover({ conversationId })
 await runtime.release({ conversationId })
-await runtime.stop()   // limpa timers pendentes
+await runtime.stop() // limpa timers pendentes
 ```
 
 O núcleo sai exportado em `@luantaraschi/lull/core`, para quem quiser rodar o
@@ -174,7 +178,7 @@ Cobertura publicada no README como badge.
   coalescing, uso em dez linhas, seção "o que esta lib não faz", decisões de
   design com o porquê.
 - **`examples/`:** servidor mínimo simulando webhook fragmentado, `npm run
-  example`, sem exigir chave de API. Quem avalia ou roda em dez segundos ou fecha
+example`, sem exigir chave de API. Quem avalia ou roda em dez segundos ou fecha
   a aba.
 - **`bench/`:** simula N conversas com padrão realista de fragmentação e reporta
   a redução de chamadas ao LLM. Gera o número verificável que vai para o

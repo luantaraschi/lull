@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-18
+
 ### Added
 
 - `redisStore()`, exported from `@luantaraschi/lull/redis`: shared state and
@@ -16,6 +18,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A serverless recipe (`npm run example:serverless`) showing how to drive the
   pure core from stateless handlers, with an external scheduler delivering the
   ticks.
+- An [API reference](docs/api.md) covering every export, option and event.
+- A showcase page at https://luantaraschi.github.io/lull/ that runs the
+  library's own reducer in the browser, compiled from `src/core` at deploy time.
+
+### Changed
+
+- CI now checks formatting, enforces a coverage floor, and runs `publint` and
+  `attw` against the packed tarball, so the published shape cannot regress
+  unnoticed.
 
 ## [0.1.0] - 2026-08-18
 
@@ -48,5 +59,6 @@ First release.
   for the next message.
 - `memoryStore()` keeps state in process memory; it is lost on restart.
 
-[Unreleased]: https://github.com/luantaraschi/lull/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/luantaraschi/lull/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/luantaraschi/lull/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/luantaraschi/lull/releases/tag/v0.1.0

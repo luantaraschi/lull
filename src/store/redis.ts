@@ -28,7 +28,8 @@ export type RedisStoreOptions = {
  * Deletes the lock only if we still hold it. Without the comparison, a section
  * that outlived its own TTL would delete the lock its successor is holding.
  */
-const UNLOCK = 'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end'
+const UNLOCK =
+  'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end'
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -64,9 +65,7 @@ export function redisStore(client: RedisLike, options: RedisStoreOptions = {}): 
         const acquired = await client.set(key, token, 'PX', lockTtlMs, 'NX')
         if (acquired !== null) break
         if (Date.now() >= giveUpAt) {
-          throw new Error(
-            `lull: timed out acquiring the lock for conversation "${conversationId}"`,
-          )
+          throw new Error(`lull: timed out acquiring the lock for conversation "${conversationId}"`)
         }
         await sleep(retryDelayMs)
       }

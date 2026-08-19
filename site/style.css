@@ -31,8 +31,8 @@
   /* Type. A monospace carries the display role because the subject is
      timestamps, event names and a deadline in milliseconds; the serif carries
      running prose so the two roles never blur. */
-  --face-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --face-prose: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --face-data: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --face-prose: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
   /* Scale. Body 17px at a 68ch measure, stepped by 1.25. Rounded to whole
      pixels so hairlines and baselines stay crisp. */
@@ -368,7 +368,7 @@ code {
 /* The label hangs to the left of its line: the deadline can sit near the right
    edge, and a label drawn outward from there is cut off. */
 .strip__deadline::after {
-  content: "deadline";
+  content: 'deadline';
   position: absolute;
   top: 0;
   right: 4px;
@@ -389,7 +389,7 @@ code {
    opacity can. Fading it in reads as the bot standing down; switching it on
    reads as a glitch. */
 .strip::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -453,7 +453,7 @@ button.secondary:hover {
   color: var(--ink);
 }
 
-button.secondary[aria-pressed="true"] {
+button.secondary[aria-pressed='true'] {
   background: var(--speech);
   border-color: var(--speech);
   color: var(--sheet);

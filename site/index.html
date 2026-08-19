@@ -38,8 +38,8 @@
         <span class="wordmark">lull</span>
         <nav>
           <a href="https://github.com/luantaraschi/lull">GitHub</a>
-          <a href="https://github.com/luantaraschi/lull#readme">Docs</a>
-          <a href="https://github.com/luantaraschi/lull/releases/tag/v0.1.0">v0.1.0</a>
+          <a href="https://github.com/luantaraschi/lull/blob/main/docs/api.md">API</a>
+          <a href="https://github.com/luantaraschi/lull/releases">Releases</a>
         </nav>
       </header>
 
@@ -54,8 +54,8 @@
           <h1 class="thesis">Four balloons. Four model calls.</h1>
           <p class="standfirst">
             One question, answered four times, and the last three replies were written without
-            knowing what the person was still typing. lull waits for the conversation to fall
-            quiet and hands your agent <strong>one turn</strong>.
+            knowing what the person was still typing. lull waits for the conversation to fall quiet
+            and hands your agent <strong>one turn</strong>.
           </p>
         </section>
 
@@ -110,7 +110,9 @@
               somebody who never stops typing still gets an answer.
             </p>
           </div>
-          <div class="rule-panel">at &gt;= min(lastMessageAt + quietMs, firstBufferedAt + maxWaitMs)</div>
+          <div class="rule-panel">
+            at &gt;= min(lastMessageAt + quietMs, firstBufferedAt + maxWaitMs)
+          </div>
           <div class="column">
             <p>
               That line is the whole coalescing mechanism. The instrument above runs it: the
@@ -136,9 +138,9 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
           <div class="column">
             <p>
               Because time arrives as a number on the event, testing four messages in eight seconds
-              is arithmetic. There are 38 tests and none of them sleep. Three are property based:
-              no message is ever lost, no turn is emitted while a human holds the conversation, and
-              the deduplication window never grows past its bound.
+              is arithmetic. There are 38 tests and none of them sleep. Three are property based: no
+              message is ever lost, no turn is emitted while a human holds the conversation, and the
+              deduplication window never grows past its bound.
             </p>
           </div>
         </section>
@@ -159,9 +161,9 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
             <h3>Human takeover</h3>
             <p>
               Call takeover and the bot goes quiet for a TTL. Messages arriving meanwhile are
-              dropped rather than queued, so when the TTL lapses the bot does not wake up and
-              answer twenty messages a colleague already handled. Press the button above and watch
-              the strip stop accepting work.
+              dropped rather than queued, so when the TTL lapses the bot does not wake up and answer
+              twenty messages a colleague already handled. Press the button above and watch the
+              strip stop accepting work.
             </p>
             <h3>Session expiry</h3>
             <p>
@@ -195,8 +197,8 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
           </dl>
           <div class="column">
             <p style="margin-top: var(--space-6)">
-              Run <code>npm run bench</code> to reproduce the number. The generator is seeded, so
-              it prints the same figure on every machine.
+              Run <code>npm run bench</code> to reproduce the number. The generator is seeded, so it
+              prints the same figure on every machine.
             </p>
           </div>
         </section>
@@ -221,8 +223,8 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
           <div class="column">
             <p>
               Known limitation, stated where you can find it: with the facade, timers live in the
-              process that received the message. If that process dies with a turn buffered, the
-              turn waits for the next message instead of firing on time.
+              process that received the message. If that process dies with a turn buffered, the turn
+              waits for the next message instead of firing on time.
             </p>
           </div>
         </section>
@@ -232,7 +234,12 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
         <span>MIT licensed. Written by Luan Taraschi.</span>
         <span>
           <a href="https://github.com/luantaraschi/lull">Source</a> &middot;
-          <a href="https://github.com/luantaraschi/lull/blob/main/docs/writing/why-the-core-is-a-pure-reducer.md">Design notes</a>
+          <a href="https://github.com/luantaraschi/lull/blob/main/docs/api.md">API reference</a>
+          &middot;
+          <a
+            href="https://github.com/luantaraschi/lull/blob/main/docs/writing/why-the-core-is-a-pure-reducer.md"
+            >Design notes</a
+          >
         </span>
       </footer>
     </div>

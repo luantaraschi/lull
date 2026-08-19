@@ -88,7 +88,10 @@ function run(effect) {
   if (effect.type === 'schedule') {
     clearTimeout(timer)
     deadlineAt = effect.at
-    timer = setTimeout(() => dispatch({ type: 'tick', at: Date.now() }), Math.max(0, effect.at - Date.now()))
+    timer = setTimeout(
+      () => dispatch({ type: 'tick', at: Date.now() }),
+      Math.max(0, effect.at - Date.now()),
+    )
     write('schedule', `at +${((effect.at - Date.now()) / 1000).toFixed(1)}s`)
     return
   }
@@ -162,7 +165,11 @@ function render() {
   // messages the reducer has resolved into a turn or a drop count here, so the
   // figure never claims a saving the run has not made.
   const resolved = sent - state.buffer.length
-  setCounter(countSaved, resolved === 0 ? 0 : Math.round(((resolved - turns) / resolved) * 100), '%')
+  setCounter(
+    countSaved,
+    resolved === 0 ? 0 : Math.round(((resolved - turns) / resolved) * 100),
+    '%',
+  )
   strip.classList.toggle('strip--paused', paused)
   takeoverButton.setAttribute('aria-pressed', String(paused))
   takeoverButton.textContent = paused ? 'Human releases it' : 'Human takes over'
@@ -287,7 +294,8 @@ resetButton.addEventListener('click', () => {
   sent = 0
   turns = 0
   paused = false
-  log.innerHTML = '<li class="log__empty">Nothing has run yet. Send a message and the effects the reducer returns appear here.</li>'
+  log.innerHTML =
+    '<li class="log__empty">Nothing has run yet. Send a message and the effects the reducer returns appear here.</li>'
   render()
   draw()
 })
