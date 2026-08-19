@@ -62,9 +62,83 @@
         <section class="instrument" aria-labelledby="instrument-title">
           <div class="instrument__head">
             <h2 id="instrument-title" class="label">Run it</h2>
-            <p class="label" id="policy-note">
-              quietMs 2500 &middot; maxWaitMs 15000 &middot; takeover TTL shortened to 8s here
-            </p>
+            <div class="policy">
+              <p class="label policy__fields">
+                <span class="policy__field">
+                  <label for="policy-quiet">quietMs</label>
+                  <input
+                    id="policy-quiet"
+                    data-policy="quietMs"
+                    type="number"
+                    value="2500"
+                    min="200"
+                    max="8000"
+                    step="100"
+                    inputmode="numeric"
+                  />
+                </span>
+                <span class="policy__field">
+                  <label for="policy-cap">maxWaitMs</label>
+                  <input
+                    id="policy-cap"
+                    data-policy="maxWaitMs"
+                    type="number"
+                    value="15000"
+                    min="1000"
+                    max="18000"
+                    step="500"
+                    inputmode="numeric"
+                  />
+                </span>
+                <span class="policy__field">
+                  <label for="policy-takeover">takeoverTtlMs</label>
+                  <input
+                    id="policy-takeover"
+                    data-policy="takeoverTtlMs"
+                    type="number"
+                    value="8000"
+                    min="1000"
+                    max="60000"
+                    step="1000"
+                    inputmode="numeric"
+                  />
+                </span>
+                <span class="policy__field">
+                  <label for="policy-session">sessionTtlMs</label>
+                  <input
+                    id="policy-session"
+                    data-policy="sessionTtlMs"
+                    type="number"
+                    value="20000"
+                    min="2000"
+                    max="600000"
+                    step="1000"
+                    inputmode="numeric"
+                  />
+                </span>
+                <span class="policy__field">
+                  <label for="policy-dedupe">dedupeWindow</label>
+                  <input
+                    id="policy-dedupe"
+                    data-policy="dedupeWindow"
+                    type="number"
+                    value="200"
+                    min="1"
+                    max="500"
+                    step="1"
+                    inputmode="numeric"
+                  />
+                </span>
+              </p>
+              <p class="policy__note">
+                The numbers are editable and reach the reducer at once. takeoverTtlMs and
+                sessionTtlMs start smaller here than in the library, where they are 900000 and
+                1800000, so both lapse while you are watching.
+                <button type="button" class="policy__restore" id="policy-restore">
+                  restore defaults
+                </button>
+              </p>
+            </div>
           </div>
 
           <div class="instrument__grid">
@@ -216,7 +290,9 @@ const [next, effects] = reduce(state, { type: 'message', id, text, at }, policy)
             <h3>Session expiry</h3>
             <p>
               After a period of inactivity the next turn arrives flagged as a new session, which is
-              the cue to reset the model context.
+              the cue to reset the model context. The header above starts sessionTtlMs at 20 seconds
+              rather than the half hour the library uses, so a pause in your own conversation is
+              enough to watch the next turn come back flagged.
             </p>
           </div>
         </section>

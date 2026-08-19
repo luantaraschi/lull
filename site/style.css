@@ -541,6 +541,97 @@ button.secondary[aria-pressed='true'] {
   font-style: normal;
 }
 
+/* Policy ------------------------------------------------------------------ */
+
+/* The header used to state the policy and now holds it. The five numbers are
+   the Policy type the library takes, and they are fields rather than text
+   because the page is an instrument and these are its settings. Nothing about
+   the line changes shape: same face, same size, same spacing, one hairline
+   under each value to say it can be moved. */
+.policy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* No separators between the fields. An interpunct is one more thing that can
+   end up stranded at the end of a wrapped line, and the labels already say
+   where one value stops and the next begins. */
+.policy__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.policy__field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.policy__field input {
+  font: inherit;
+  letter-spacing: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 0 0 2px;
+  text-align: center;
+  /* Tabular figures for the same reason the counters use them: the line should
+     not breathe while a number is being typed into it. */
+  font-variant-numeric: tabular-nums;
+  /* The spinners are two more shapes in a page built from hairlines, and the
+     arrow keys still step without them. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.policy__field input::-webkit-outer-spin-button,
+.policy__field input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.policy__field input:hover {
+  border-bottom-color: var(--ink);
+}
+
+.policy__field input:focus {
+  border-bottom-color: var(--speech);
+}
+
+/* The measure belongs to the sentence, not to the block: the fields want one
+   line and the note wants a width somebody can read. */
+.policy__note {
+  margin: 0;
+  max-width: 84ch;
+  font-family: var(--face-data);
+  font-size: 0.6875rem;
+  line-height: 1.7;
+  color: var(--graphite);
+}
+
+/* A button that is a word in a sentence, so it undoes everything the page
+   gives a button and takes what it gives a link instead. */
+.policy__restore {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--speech);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.policy__restore:hover {
+  background: none;
+  color: var(--ink);
+}
+
 /* Conversation ------------------------------------------------------------ */
 
 /* Two views of one run. The conversation is what the person sees and the strip

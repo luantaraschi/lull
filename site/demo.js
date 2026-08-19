@@ -9,18 +9,8 @@
 */
 import { deadline, initialState, reduce } from './vendor/index.js'
 import { createChat } from './chat.js'
+import { createPolicy } from './policy.js'
 import { createStrip } from './strip.js'
-
-const POLICY = {
-  quietMs: 2_500,
-  maxWaitMs: 15_000,
-  sessionTtlMs: 1_800_000,
-  // The library default is 900000. Eight seconds is the one value this page
-  // changes, so a visitor can watch a takeover lapse without waiting a quarter
-  // of an hour. The header says so.
-  takeoverTtlMs: 8_000,
-  dedupeWindow: 200,
-}
 
 /* A channel reports composing on a cadence rather than per keystroke, so the
    page throttles the same way a gateway would before the webhook is sent. The
@@ -74,6 +64,23 @@ let typingLit = false
 let typingTimer = null
 let typingSentAt = 0
 
+/* The header holds the policy the reducer runs under, and the visitor may
+   move any of it mid conversation. A change is not something this file acts
+   on: it feeds the reducer a tick and takes back whatever the reducer decides,
+   which may be a new deadline or a turn that is already overdue.
+
+   One honest limit, which the page does not apologise for on screen: a shorter
+   takeoverTtlMs does not shorten a takeover already running. The reducer
+   stamps pausedUntil when the takeover event lands, and the new value applies
+   to the next one. */
+let policy = createPolicy({
+  onChange(next) {
+    policy = next
+    if (state.buffer.length > 0) dispatch({ type: 'tick', at: Date.now() })
+    else tickWait()
+  },
+})
+
 function write(kind, detail) {
   log.querySelector('.log__empty')?.remove()
   const line = document.createElement('li')
@@ -86,7 +93,7 @@ function write(kind, detail) {
 }
 
 function dispatch(event) {
-  const [next, effects] = reduce(state, event, POLICY)
+  const [next, effects] = reduce(state, event, policy)
   state = next
   for (const effect of effects) run(effect)
   render()
@@ -207,7 +214,7 @@ function tickWait() {
      so. The hypothetical is put at the deadline rather than at now, because a
      tick landing in the same millisecond as a keystroke would otherwise read
      as a deadline that cannot move, which is the opposite of what happened. */
-  const held = deadline({ ...state, lastTypingAt: deadlineAt }, POLICY)
+  const held = deadline({ ...state, lastTypingAt: deadlineAt }, policy)
   const label = held <= deadlineAt ? 'maxWaitMs cap' : 'waiting for silence'
 
   // Not the closing rule, only the moment it last restarted from.
@@ -273,7 +280,7 @@ takeoverButton.addEventListener('click', () => {
         render()
         write('takeover', 'TTL lapsed, the bot is listening again')
       }
-    }, POLICY.takeoverTtlMs)
+    }, policy.takeoverTtlMs)
   }
   strip.draw()
 })
