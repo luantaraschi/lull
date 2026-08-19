@@ -1,0 +1,236 @@
+<!doctype html>
+<!--
+  Source for assets/banner.png and assets/banner-dark.png, the card at the top
+  of the README.
+
+  One file, two palettes. Two files would have drifted apart at the first edit,
+  and what the dark one has to keep is the layout, not a second idea.
+
+  Regenerate at 1280x440, shot at twice that so it stays crisp on a retina
+  screen:
+    node scripts/shoot-banner.js
+
+  It repeats the page's own palette and faces rather than inventing a second
+  identity for the README.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>lull banner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* The light palette is the site's, unchanged.
+
+         The dark one is not an inversion of it. On paper the accent carries the
+         moment the system speaks, so the turn is indigo and its text is paper.
+         On ink there is nowhere darker to go, so the turn becomes the paper and
+         the ink comes back as its text. The accent stays in play either way. */
+      :root {
+        --paper: #f1f3f2;
+        --ink: #14181b;
+        --graphite: #5f686e;
+        --rule: #d9ddd8;
+        --speech: #2a2470;
+
+        --turn-bg: var(--speech);
+        --turn-ink: #fbfbfa;
+      }
+
+      :root[data-theme='dark'] {
+        --paper: #14181b;
+        --ink: #f1f3f2;
+        --graphite: #8d9599;
+        --rule: #2b3238;
+
+        --turn-bg: #f1f3f2;
+        --turn-ink: #14181b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 1280px;
+        height: 440px;
+        padding: 46px 60px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .wordmark {
+        font-size: 26px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+      }
+
+      .label {
+        display: block;
+        align-self: end;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--graphite);
+        margin-bottom: 12px;
+        white-space: nowrap;
+      }
+
+      /* A grid rather than a row of boxes, because the card is about the four
+         lines on the left being the four lines on the right, and a reader
+         should see that by running their eye across. The grid is what puts
+         them on the same baseline; the padding on the left column is there to
+         match the padding inside the turn, invisible and load bearing. */
+      .middle {
+        display: grid;
+        /* The silence takes whatever is left over, which is the point of it:
+           the wait is the widest thing on the card. */
+        grid-template-columns: max-content 34px 1fr max-content;
+        row-gap: 12px;
+        align-items: center;
+      }
+
+      .in {
+        grid-column: 1;
+        padding: 20px 0;
+      }
+
+      .line {
+        display: block;
+        font-size: 17px;
+        line-height: 30px;
+        white-space: nowrap;
+      }
+
+      .line time {
+        display: inline-block;
+        min-width: 10ch;
+        color: var(--graphite);
+      }
+
+      /* The brace is three sides of a rectangle with the fourth left open,
+         which is what a square-cornered page has instead of a curly bracket.
+         Half strength, the way the page draws its deadline: it is anatomy, not
+         a thing being said. */
+      .bracket {
+        grid-column: 2;
+        justify-self: end;
+        align-self: stretch;
+        width: 16px;
+        border: 1px solid var(--graphite);
+        border-left: 0;
+        opacity: 0.5;
+      }
+
+      /* The silence, named and measured, sitting on the line that carries the
+         four messages across to the one turn. It is the whole mechanism: the
+         library is the wait, and the wait is what the arrow is made of. */
+      /* The rule is the only thing in flow here, so centring the cell centres
+         the line itself. The label rides above it rather than pushing it down,
+         which is what would happen if it were a sibling. */
+      .quiet {
+        grid-column: 3;
+        position: relative;
+        text-align: center;
+      }
+
+      .quiet__label {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        right: 0;
+        margin-bottom: 12px;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--speech);
+      }
+
+      :root[data-theme='dark'] .quiet__label {
+        color: var(--ink);
+      }
+
+      .quiet__rule {
+        height: 1px;
+        background: var(--graphite);
+        opacity: 0.5;
+      }
+
+      .turn {
+        grid-column: 4;
+        padding: 20px 26px;
+        background: var(--turn-bg);
+        color: var(--turn-ink);
+      }
+
+      .turn .line {
+        color: var(--turn-ink);
+      }
+
+      /* Prose is the only thing set in the serif, here as on the page, so the
+         two roles never blur. */
+      .standfirst {
+        font-family: 'Source Serif 4', Georgia, serif;
+        font-size: 20px;
+        line-height: 1.45;
+        color: var(--graphite);
+        margin: 0;
+        border-top: 1px solid var(--rule);
+        padding-top: 20px;
+      }
+
+      .standfirst strong {
+        color: var(--ink);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <span class="wordmark">lull</span>
+
+    <div class="middle">
+      <span class="label" style="grid-column: 1 / 3">Four webhooks, three seconds</span>
+      <span class="label" style="grid-column: 4">19:04:10 &middot; one turn, one model call</span>
+
+      <div class="in">
+        <span class="line"><time>19:04:02</time>hi</span>
+        <span class="line"><time>19:04:03</time>i wanted to ask</span>
+        <span class="line"><time>19:04:04</time>about the flat</span>
+        <span class="line"><time>19:04:05</time>the one downtown</span>
+      </div>
+
+      <div class="bracket"></div>
+
+      <div class="quiet">
+        <span class="quiet__label">5s of quiet</span>
+        <div class="quiet__rule"></div>
+      </div>
+
+      <div class="turn">
+        <span class="line">hi</span>
+        <span class="line">i wanted to ask</span>
+        <span class="line">about the flat</span>
+        <span class="line">the one downtown</span>
+      </div>
+    </div>
+
+    <p class="standfirst">
+      Four balloons, four model calls, and the last three replies written without knowing what the
+      person was still typing. lull waits for the silence and hands your agent
+      <strong>one turn</strong>.
+    </p>
+
+    <script>
+      document.documentElement.dataset.theme = location.hash === '#dark' ? 'dark' : 'light'
+    </script>
+  </body>
+</html>

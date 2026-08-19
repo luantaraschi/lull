@@ -1,8 +1,18 @@
-# lull
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png" />
+  <img
+    src="assets/banner.png"
+    alt="lull: four webhooks between 19:04:02 and 19:04:05, gathered by five seconds of quiet into one turn at 19:04:10, one model call."
+    width="1280"
+  />
+</picture>
 
 [![ci](https://github.com/luantaraschi/lull/actions/workflows/ci.yml/badge.svg)](https://github.com/luantaraschi/lull/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@luantaraschi/lull.svg)](https://www.npmjs.com/package/@luantaraschi/lull)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@luantaraschi/lull.svg?color=2a2470)](https://www.npmjs.com/package/@luantaraschi/lull)
+[![node](https://img.shields.io/node/v/@luantaraschi/lull?color=2a2470)](package.json)
+[![dependencies](https://img.shields.io/badge/dependencies-none-2a2470)](package.json)
+[![license](https://img.shields.io/badge/license-MIT-2a2470)](LICENSE)
+[![discussions](https://img.shields.io/badge/discussions-join-2a2470)](https://github.com/luantaraschi/lull/discussions)
 
 **[Run it in your browser](https://luantaraschi.github.io/lull/)**, where the
 page drives this library's own reducer, compiled from `src/core`.
