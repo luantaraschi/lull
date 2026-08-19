@@ -3,6 +3,9 @@ name: release
 on:
   push:
     tags: ['v*']
+  # So a release can be re-run after the npm credentials exist, without
+  # deleting and recreating a tag that is already published.
+  workflow_dispatch:
 
 permissions:
   contents: read
