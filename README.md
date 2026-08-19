@@ -1,6 +1,7 @@
 # lull
 
 [![ci](https://github.com/luantaraschi/lull/actions/workflows/ci.yml/badge.svg)](https://github.com/luantaraschi/lull/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@luantaraschi/lull.svg)](https://www.npmjs.com/package/@luantaraschi/lull)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **[Run it in your browser](https://luantaraschi.github.io/lull/)**, where the
@@ -50,14 +51,8 @@ bench` to reproduce the number.
 npm i @luantaraschi/lull
 ```
 
-The package is not on npm yet. Until it is, install straight from the
-repository:
-
-```bash
-npm i luantaraschi/lull
-```
-
-Node 20 or newer. No runtime dependencies.
+Node 20 or newer. No runtime dependencies. Published from CI with provenance,
+so npm shows which commit and which workflow built the tarball.
 
 ## What it handles
 
