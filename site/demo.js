@@ -185,10 +185,15 @@ function run(effect) {
     deadlineAt = null
     strip.setDeadline(null)
     turns += 1
-    const text = effect.messages.map((message) => message.text).join(' ')
+    /* The chat keeps the messages apart, one balloon to a line, because that is
+       how the person sent them. The band on the strip is one line by
+       construction and the log is a record of one line, so both take them
+       joined. */
+    const lines = effect.messages.map((message) => message.text)
+    const text = lines.join(' ')
     strip.mark('turn', Date.now(), { from: effect.messages[0].at, text })
-    chat.close({ text, count: effect.messages.length, isNewSession: effect.isNewSession })
-    write('emitTurn', `${effect.messages.length} message(s): "${text}"`)
+    chat.close({ lines, isNewSession: effect.isNewSession })
+    write('emitTurn', `${lines.length} message(s): "${text}"`)
   }
 }
 

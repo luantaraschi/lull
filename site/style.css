@@ -846,6 +846,10 @@ button.secondary[aria-pressed='true'] {
   overflow-wrap: anywhere;
 }
 
+.chat__turn-line {
+  display: block;
+}
+
 /* Three dots would be a second expressive device on a page that decided to
    have one. The chip says it in the same voice as everything else. */
 .chat__typing {

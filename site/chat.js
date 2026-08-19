@@ -82,18 +82,25 @@ export function createChat({ thread, typing, stateChip, reducedMotion }) {
       scroll()
     },
 
-    close({ text, count, isNewSession }) {
+    close({ lines, isNewSession }) {
       const turn = document.createElement('div')
       turn.className = 'chat__turn'
 
       const head = document.createElement('span')
       head.className = 'chat__turn-head'
-      const tally = count === 1 ? 'one message' : `${count} messages`
+      const tally = lines.length === 1 ? 'one message' : `${lines.length} messages`
       head.textContent = isNewSession ? `one turn, ${tally}, new session` : `one turn, ${tally}`
 
+      /* One turn, still the messages it was made of. Running them together
+         into a paragraph would hide the thing the block is here to show. */
       const body = document.createElement('span')
       body.className = 'chat__turn-text'
-      body.textContent = text
+      for (const line of lines) {
+        const item = document.createElement('span')
+        item.className = 'chat__turn-line'
+        item.textContent = line
+        body.append(item)
+      }
       turn.append(head, body)
 
       const closing = openGroup()
