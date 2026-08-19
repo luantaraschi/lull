@@ -64,30 +64,78 @@ let typingLit = false
 let typingTimer = null
 let typingSentAt = 0
 
-/* The header holds the policy the reducer runs under, and the visitor may
-   move any of it mid conversation. A change is not something this file acts
-   on: it feeds the reducer a tick and takes back whatever the reducer decides,
-   which may be a new deadline or a turn that is already overdue.
+/* A fader fires while it is being dragged, many times a second. A change is
+   not something this file acts on either way: it feeds the reducer a tick and
+   takes back whatever the reducer decides, which may be a new deadline or a
+   turn that is already overdue. Spacing those ticks keeps the effect log
+   readable, and the trailing one guarantees that the value the fader settles
+   on is the value the reducer is left holding. */
+const RESCHEDULE_EVERY_MS = 120
+let rescheduledAt = 0
+let rescheduleTimer = null
 
-   One honest limit, which the page does not apologise for on screen: a shorter
-   takeoverTtlMs does not shorten a takeover already running. The reducer
-   stamps pausedUntil when the takeover event lands, and the new value applies
-   to the next one. */
-let policy = createPolicy({
-  onChange(next) {
-    policy = next
-    if (state.buffer.length > 0) dispatch({ type: 'tick', at: Date.now() })
-    else tickWait()
-  },
-})
+function repolicy(next) {
+  policy = next
+  if (state.buffer.length === 0) {
+    tickWait()
+    return
+  }
+
+  const since = Date.now() - rescheduledAt
+  if (since >= RESCHEDULE_EVERY_MS) {
+    rescheduledAt = Date.now()
+    dispatch({ type: 'tick', at: rescheduledAt })
+    return
+  }
+
+  if (rescheduleTimer !== null) return
+  rescheduleTimer = setTimeout(() => {
+    rescheduleTimer = null
+    rescheduledAt = Date.now()
+    if (state.buffer.length > 0) dispatch({ type: 'tick', at: rescheduledAt })
+  }, RESCHEDULE_EVERY_MS - since)
+}
+
+/* The two the page keeps off the faders. takeoverTtlMs is 900000 in the
+   library and eight seconds here, so a takeover lapses while somebody is still
+   looking at it. dedupeWindow is the library default: nothing the page can do
+   would move it far enough to be worth a control. */
+const FIXED = { takeoverTtlMs: 8_000, dedupeWindow: 200 }
+
+let policy = createPolicy({ fixed: FIXED, onChange: repolicy })
 
 function write(kind, detail) {
   log.querySelector('.log__empty')?.remove()
+
+  /* Somebody typing, or dragging a fader, produces a run of schedules. Forty
+     copies of one line is not a record of what happened, it is a record with
+     the interesting parts pushed off the bottom, so a run collapses into a
+     single line carrying the latest deadline and how often it moved. Only
+     schedules collapse: two drops in a row are two different messages. */
+  const previous = log.firstElementChild
+  if (kind === 'schedule' && previous?.dataset.kind === 'schedule') {
+    const repeats = Number(previous.dataset.repeats ?? 1) + 1
+    previous.dataset.repeats = String(repeats)
+    previous.querySelector('.log__detail').textContent = ` ${detail}`
+    previous.querySelector('.log__repeats').textContent = ` ×${repeats}`
+    return
+  }
+
   const line = document.createElement('li')
+  line.dataset.kind = kind
+
   const name = document.createElement(kind === 'emitTurn' ? 'em' : 'b')
   name.textContent = kind
+
   // The detail carries whatever the visitor typed, so it goes in as text.
-  line.append(name, ` ${detail}`)
+  const body = document.createElement('span')
+  body.className = 'log__detail'
+  body.textContent = ` ${detail}`
+
+  const repeats = document.createElement('span')
+  repeats.className = 'log__repeats'
+
+  line.append(name, body, repeats)
   log.prepend(line)
   while (log.children.length > 40) log.lastElementChild.remove()
 }
@@ -288,6 +336,8 @@ takeoverButton.addEventListener('click', () => {
 resetButton.addEventListener('click', () => {
   clearTimeout(timer)
   clearTimeout(typingTimer)
+  clearTimeout(rescheduleTimer)
+  rescheduleTimer = null
   state = initialState('demo')
   strip.clear()
   chat.clear()
